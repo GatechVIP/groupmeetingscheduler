@@ -1,0 +1,16 @@
+{
+    "enabled": true,
+    "hasSettings": true,
+    "i18n": {
+        "default": {
+            "bundle": "/devwidgets/groupmeetingscheduler/bundles/default.properties",
+            "name": "Group Meeting Scheduler",
+            "description": "A widget for deciding when to meet."
+        }
+    },
+    "id": "groupmeetingscheduler",
+    "personalportal": false,
+    "sakaidocs": true,
+    "type": "contrib",
+    "url": "/devwidgets/groupmeetingscheduler/groupmeetingscheduler.html"
+}
