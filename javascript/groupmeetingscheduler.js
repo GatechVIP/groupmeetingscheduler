@@ -49,7 +49,7 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
         var $cancelSettings = $('#groupmeetingscheduler_cancel_settings', $rootel);
         var $colorPicker = $('#groupmeetingscheduler_color', $rootel);
         var $usernameContainer = $('#groupmeetingscheduler_username', $rootel);
-
+    			var $calendarContainer = $('#groupmeetingscheduler_calendar', $rootel);
 
         ///////////////////////
         // Utility functions //
@@ -98,11 +98,33 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
          * (i.e. '#00FF00')
          */
         var showMainView = function(color) {
-            // set the color of the text
-            $('p', $mainContainer).css('color', checkColorArgument(color));
 
-            // show the Main container
-            $mainContainer.show();
+						// For each day of the week
+						for (var i=0; i < 7; i++) {
+							// Day block contains all of the time blocks for one day
+							var dayBlock = document.createElement('div');
+							dayBlock.setAttribute('id', 'groupmeetingscheduler_dayBlock'+ i + $rootel);
+							dayBlock.setAttribute('style', 'display: inline-block;');
+							
+							// Each time block represents some time increment (15min?)
+							for (var j=0; j < 50; j++){
+								var timeBlock = document.createElement('div');
+								timeBlock.setAttribute('id', 'groupmeetingscheduler_timeBlock' + j + $rootel);
+								timeBlock.setAttribute('style', 'width: 50px; height: 10px; background-color: #f00; border: black solid 1px; ');
+								// Time blocks are added to day blocks
+								dayBlock.appendChild(timeBlock);
+								
+								// Event handlers
+		          	timeBlock.onmousedown = downhandler;
+								timeBlock.onmouseup = uphandler;
+								timeBlock.onmouseover = overhandler;
+							}
+							// Day blocks
+							$calendarContainer.append(dayBlock);
+						}
+						$mainContainer.show();
+						
+						
         };
 
 
@@ -148,7 +170,27 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
             sakai.api.Widgets.Container.informFinish(tuid, 'groupmeetingscheduler');
         });
 
-
+				var downhandler = function(e) {
+					var block = e.target;
+					block.isTimeSet = !block.isTimeSet;
+					block.style.backgroundColor = block.isTimeSet ? '#0f0' : '#f00';
+					mouseState = block.isTimeSet ? 1 : 2;
+					e.preventDefault();
+				};
+	
+				var uphandler = function() {
+					mouseState = 0;
+				};
+	
+				var overhandler = function(e) {
+					if (mouseState == 1) {
+						e.target.style.backgroundColor = '#0f0';
+						e.target.isTimeSet = 1;
+					} else if (mouseState == 2) {
+						e.target.style.backgroundColor = '#f00';
+						e.target.isTimeSet = 0;
+					}
+				};
         /////////////////////////////
         // Initialization function //
         /////////////////////////////
@@ -169,7 +211,7 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
                 $settingsContainer.show();
             } else {
                 // set up Main view
-
+								
                 // get data about the current user
                 var me = sakai.data.me;
 
