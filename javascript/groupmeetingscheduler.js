@@ -49,7 +49,7 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
         var $cancelSettings = $('#groupmeetingscheduler_cancel_settings', $rootel);
         var $colorPicker = $('#groupmeetingscheduler_color', $rootel);
         var $usernameContainer = $('#groupmeetingscheduler_username', $rootel);
-    			var $calendarContainer = $('#groupmeetingscheduler_calendar', $rootel);
+				var $calendarContainer = $('#groupmeetingscheduler_calendar', $rootel);
 
         ///////////////////////
         // Utility functions //
@@ -99,7 +99,7 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
          */
         var showMainView = function(color) {
 
-						// For each day of the week
+						// For each day of the week, add a day block
 						for (var i=0; i < 7; i++) {
 							// Day block contains all of the time blocks for one day
 							var dayBlock = document.createElement('div');
@@ -122,6 +122,7 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
 							// Day blocks
 							$calendarContainer.append(dayBlock);
 						}
+						// Show main container
 						$mainContainer.show();
 						
 						
