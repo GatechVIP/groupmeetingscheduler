@@ -97,6 +97,7 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
          * @param {String} color The hex value of the color to set the text
          * (i.e. '#00FF00')
          */
+	var usersAndFreeTimes = {};
         var showMainView = function(color) {
 
 						// For each day of the week, add a day block
@@ -109,13 +110,13 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
 							// Each time block represents some time increment (15min?)
 							for (var j=0; j < 50; j++){
 								var timeBlock = document.createElement('div');
-								timeBlock.setAttribute('id', 'groupmeetingscheduler_timeBlock' + j + $rootel);
+								timeBlock.setAttribute('id', 'groupmeetingscheduler_timeBlock' + (j+i*7));
 								timeBlock.setAttribute('style', 'width: 50px; height: 10px; background-color: #f00; border: black solid 1px; ');
 								// Time blocks are added to day blocks
 								dayBlock.appendChild(timeBlock);
 								
 								// Event handlers
-		          	timeBlock.onmousedown = downhandler;
+		          					timeBlock.onmousedown = downhandler;
 								timeBlock.onmouseup = uphandler;
 								timeBlock.onmouseover = overhandler;
 							}
