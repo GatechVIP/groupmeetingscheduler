@@ -97,8 +97,13 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
          * @param {String} color The hex value of the color to set the text
          * (i.e. '#00FF00')
          */
-	var usersAndFreeTimes = {};
+	var widgetData = {usersAndFreeTimes:{}};
+	var userid = "";
+
         var showMainView = function(color) {
+			sakai.api.User.loadMeData(function(success, data){
+						//Only begin to create data when user info retrieved.
+						userid = data.user.userid;
 
 						// For each day of the week, add a day block
 						for (var i=0; i < 7; i++) {
@@ -125,7 +130,7 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
 						}
 						// Show main container
 						$mainContainer.show();
-						
+			}
 						
         };
 
