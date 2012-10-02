@@ -170,7 +170,8 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
         $cancelSettings.on('click', function(){
             sakai.api.Widgets.Container.informFinish(tuid, 'groupmeetingscheduler');
         });
-
+		
+		var mouseState = 0;
 				var downhandler = function(e) {
 					var block = e.target;
 					block.isTimeSet = !block.isTimeSet;
