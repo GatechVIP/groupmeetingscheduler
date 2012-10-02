@@ -34,7 +34,6 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
      */
     sakai_global.groupmeetingscheduler = function(tuid, showSettings) {
 
-
         /////////////////////////////
         // Configuration variables //
         /////////////////////////////
@@ -97,7 +96,24 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
          * @param {String} color The hex value of the color to set the text
          * (i.e. '#00FF00')
          */
+	var widgetData = {usersFreeTimes:{}};
+	var userid = "";
+
         var showMainView = function(color) {
+		sakai.api.Widgets.loadWidgetData(tuid, function(success, data) {
+			//TODO:  Make this and loadMeData take success into account; what to do in failure case?
+			widgetData = data;
+
+			sakai.api.User.loadMeData(function(success, data){
+						//Only begin to create data when user info retrieved.
+						userid = data.user.userid;
+						//Create user free time array if we've never seen this user before
+						if(!widgetData.usersFreeTimes.hasOwnProperty(userid)){
+							widgetData.usersFreeTimes[userid] = [];
+						}
+						else if(typeof(widgetData.usersFreeTimes[userid]) == "string"){
+							widgetData.usersFreeTimes[userid] = [];
+						}
 
 						// For each day of the week, add a day block
 						for (var i=0; i < 7; i++) {
@@ -109,13 +125,19 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
 							// Each time block represents some time increment (15min?)
 							for (var j=0; j < 50; j++){
 								var timeBlock = document.createElement('div');
-								timeBlock.setAttribute('id', 'groupmeetingscheduler_timeBlock' + j + $rootel);
-								timeBlock.setAttribute('style', 'width: 50px; height: 10px; background-color: #f00; border: black solid 1px; ');
+								timeBlock.setAttribute('id', 'groupmeetingscheduler_timeBlock' + (j+i*50));
+								timeBlock.setAttribute('timeId', (j+i*7));
+								if(widgetData.usersFreeTimes[userid].indexOf(String(j+i*50)) == -1){
+									timeBlock.setAttribute('style', 'width: 50px; height: 10px; background-color: #f00; border: black solid 1px; ');
+								}
+								else{
+									timeBlock.setAttribute('style', 'width: 50px; height: 10px; background-color: #0f0; border: black solid 1px; ');
+								}
 								// Time blocks are added to day blocks
 								dayBlock.appendChild(timeBlock);
 								
 								// Event handlers
-		          	timeBlock.onmousedown = downhandler;
+		          					timeBlock.onmousedown = downhandler;
 								timeBlock.onmouseup = uphandler;
 								timeBlock.onmouseover = overhandler;
 							}
@@ -124,7 +146,9 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
 						}
 						// Show main container
 						$mainContainer.show();
-						
+			});
+
+		});
 						
         };
 
@@ -170,26 +194,50 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
         $cancelSettings.on('click', function(){
             sakai.api.Widgets.Container.informFinish(tuid, 'groupmeetingscheduler');
         });
-
+		
+		var mouseState = 0;
 				var downhandler = function(e) {
 					var block = e.target;
-					block.isTimeSet = !block.isTimeSet;
-					block.style.backgroundColor = block.isTimeSet ? '#0f0' : '#f00';
-					mouseState = block.isTimeSet ? 1 : 2;
+					var timeId = block.id.split(/groupmeetingscheduler_timeBlock/)[1];
+					//true for isTimeSet means free time.  
+					var isTimeSet = widgetData.usersFreeTimes[userid].indexOf(timeId) == -1 ? true : false ;
+					var timeIndex = widgetData.usersFreeTimes[userid].indexOf(timeId);
+					if(isTimeSet){
+						if(timeIndex == -1){
+							widgetData.usersFreeTimes[userid].push(timeId);
+						}
+					}
+					else{
+						if(timeIndex != -1){
+
+							widgetData.usersFreeTimes[userid].splice(timeIndex, 1);
+						}
+					}
+					block.style.backgroundColor = isTimeSet ? '#0f0' : '#f00';
+					mouseState = isTimeSet ? 1 : 2;
 					e.preventDefault();
 				};
 	
 				var uphandler = function() {
 					mouseState = 0;
+					sakai.api.Widgets.saveWidgetData(tuid, widgetData, function(){}, false);
 				};
 	
 				var overhandler = function(e) {
+					var block = e.target;
+					var timeId = block.id.split(/groupmeetingscheduler_timeBlock/)[1];
+					var timeIndex = widgetData.usersFreeTimes[userid].indexOf(timeId);
 					if (mouseState == 1) {
-						e.target.style.backgroundColor = '#0f0';
-						e.target.isTimeSet = 1;
+						block.style.backgroundColor = '#0f0';
+						if(timeIndex == -1){
+							widgetData.usersFreeTimes[userid].push(timeId);
+						}
+
 					} else if (mouseState == 2) {
-						e.target.style.backgroundColor = '#f00';
-						e.target.isTimeSet = 0;
+						block.style.backgroundColor = '#f00';
+						if(timeIndex != -1){
+							widgetData.usersFreeTimes[userid].splice(timeIndex, 1);
+						}
 					}
 				};
         /////////////////////////////
