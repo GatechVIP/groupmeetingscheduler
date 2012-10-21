@@ -25,8 +25,8 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
      * @class groupmeetingscheduler
      *
      * @description
-     * My Hello World is a dashboard widget that says hello to the current user
-     * with text in the color of their choosing
+     * Group Meeting Scheduler widget allows users to find a weekly group
+     * meeting time based on all members' availability
      *
      * @version 0.0.1
      * @param {String} tuid Unique id of the widget
@@ -39,110 +39,134 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
         // Configuration variables //
         /////////////////////////////
 
-        var DEFAULT_COLOR = '#000000';  // default text color is black
-
         // DOM jQuery Objects
         var $rootel = $('#' + tuid);  // unique container for each widget instance
         var $mainContainer = $('#groupmeetingscheduler_main', $rootel);
         var $settingsContainer = $('#groupmeetingscheduler_settings', $rootel);
         var $settingsForm = $('#groupmeetingscheduler_settings_form', $rootel);
         var $cancelSettings = $('#groupmeetingscheduler_cancel_settings', $rootel);
-        var $colorPicker = $('#groupmeetingscheduler_color', $rootel);
         var $usernameContainer = $('#groupmeetingscheduler_username', $rootel);
+        var $templateContainer = $('#groupmeetingscheduler_template', $rootel);
 				var $calendarContainer = $('#groupmeetingscheduler_calendar', $rootel);
+				var $debugContainer = $('#groupmeetingscheduler_debug', $rootel);
+				
+				
+				/////////////
+        // Objects //
+        /////////////
+				
+				// Contains all the information for a
+				// single day in the calendar
+				var DayBlock = function(startIndex, endIndex) {
+						this.startIndex = startIndex;
+						this.endIndex = endIndex;
+						this.id = 0;
+				}
+				// Contains all the information for a 
+				// single (15min) time slot in the calendar
+				var TimeBlock = function(isFreeTime, id) {
+        		this.isFreeTime = isFreeTime;
+        		this.id = id;
+        }
+        // Sets a time block as free (true) or busy (false)
+        TimeBlock.prototype.setFreeTime = function(isFreeTime) {
+        	this.isFreeTime = isFreeTime;
+        }
+        
+		    TimeBlock.prototype.switchTime = function() {
+        	this.isFreeTime = !this.isFreeTime;
+        }
+        var numTimeBlocksPerDay = 30;
+        // Array of (7) DayBlocks
+        var dayArray = [];
+        
+				var widgetData = {
+						usersFreeTimes:{}
+				};
+				var userid = "";
+				
+        function initDayArray() {
+		     	for (var j = 0; j < 7; j++) {
+		      		// Array of TimeBlocks for each day
+						  var timeArray = [];
+						  for (var i = 0; i < numTimeBlocksPerDay; i++) {
+						  		var timeBlock = new TimeBlock(false, i + j*numTimeBlocksPerDay);
+						  		timeArray[i] = timeBlock;
+						  }
+						  dayArray[j] = timeArray;
+		      }
+		    }
+		    
+		    function updateDayArray(id) {
+		    		var day = 0;
+		    		var time = id;
+		    		while (time >= numTimeBlocksPerDay) {
+		    				day++;
+		    				time -= numTimeBlocksPerDay;
+		    		}
+		    		var timeBlock = dayArray[day][time];
+		    		timeBlock.switchTime();
+		    		dayArray[day][time] = timeBlock;
+		    }
+		    
+		    function getTimeBlock(id) {
+		    		var day = 0;
+		    		var time = id;
+		    		while (time >= numTimeBlocksPerDay) {
+		    				day++;
+		    				time -= numTimeBlocksPerDay;
+		    		}
+		    		timeBlock = dayArray[day][time];
+		    		return timeBlock;
+		    }
 
-        ///////////////////////
-        // Utility functions //
-        ///////////////////////
-
-        /**
-         * Checks if the provided color argument is non-empty and returns the color
-         * if not empty; if empty, returns the DEFAULT_COLOR
-         *
-         * @param {String} color The hex value of the color
-         */
-        var checkColorArgument = function(color) {
-            // check if color exists and is not an empty string
-            return (color && $.trim(color)) ? $.trim(color) : DEFAULT_COLOR;
-        };
-
-        /**
-         * Gets the preferred color from the server using an asynchronous request
-         *
-         * @param {Object} callback Function to call when the request returns. This
-         * function will be sent a String with the hex value of the preferred color.
-         */
-        var getPreferredColor = function(callback) {
-            // get the data associated with this widget
-            sakai.api.Widgets.loadWidgetData(tuid, function(success, data) {
-                if (success) {
-                    // fetching the data succeeded, send it to the callback function
-                    callback(checkColorArgument(data.color));
-                } else {
-                    // fetching the data failed, we use the DEFAULT_COLOR
-                    callback(DEFAULT_COLOR);
-                }
-            });
-        };
-
-
-        /////////////////////////
-        // Main View functions //
-        /////////////////////////
-
-        /**
-         * Shows the Main view that contains the Hello World text colored in the
-         * provided color argument
-         *
-         * @param {String} color The hex value of the color to set the text
-         * (i.e. '#00FF00')
-         */
-        var showMainView = function(color) {
-
-						// For each day of the week, add a day block
-						for (var i=0; i < 7; i++) {
-							// Day block contains all of the time blocks for one day
-							var dayBlock = document.createElement('div');
-							dayBlock.setAttribute('id', 'groupmeetingscheduler_dayBlock'+ i + $rootel);
-							dayBlock.setAttribute('style', 'display: inline-block;');
-							
-							// Each time block represents some time increment (15min?)
-							for (var j=0; j < 50; j++){
-								var timeBlock = document.createElement('div');
-								timeBlock.setAttribute('id', 'groupmeetingscheduler_timeBlock' + j + $rootel);
-								timeBlock.setAttribute('style', 'width: 50px; height: 10px; background-color: #f00; border: black solid 1px; ');
-								// Time blocks are added to day blocks
-								dayBlock.appendChild(timeBlock);
-								
-								// Event handlers
-		          	timeBlock.onmousedown = downhandler;
-								timeBlock.onmouseup = uphandler;
-								timeBlock.onmouseover = overhandler;
-							}
-							// Day blocks
-							$calendarContainer.append(dayBlock);
-						}
-						// Show main container
-						$mainContainer.show();
-						
-						
-        };
-
+				function loadDayArray() {
+						var timeBlockID = 0;
+						var isTimeSet = 0;
+				   	for (var i = 0; i < 7; i++) {
+								for (var j = 0; j < numTimeBlocksPerDay; j++) {
+										timeBlockID = j + i*numTimeBlocksPerDay;
+										timeIndex = widgetData.usersFreeTimes[userid].indexOf(timeBlockID);
+										//console.log(timeBlockID+" "+timeIndex);
+										if (timeIndex != -1) {
+												updateDayArray(timeBlockID);
+												renderCalendar();
+										}
+								}
+				    }
+				}
 
         /////////////////////////////
         // Settings View functions //
         /////////////////////////////
 
-        /**
-         * Sets the color dropdown in the Settings view to the given color
-         *
-         * @param {String} color The hex value of the color
-         */
-        var setDropdownColor = function(color) {
-            // set the color dropdown to the given value
-            $colorPicker.val(checkColorArgument(color));
-        };
+				
+        ///////////////////////
+        //     Rendering     //
+        ///////////////////////
 
+        /**
+         * This renders the main calendar view where the user can select and
+         * deselect free time
+         */
+        var renderCalendar = function () {
+        		
+        		var iota = function(a) {
+        		    var i = 0;
+        		    var arr = [];
+        		    while (i < a) arr.push(i++);
+        		    return arr;
+        		}
+						// JSON object containing an array of TimeBlocks for each day
+						var daysAndTimes = {
+								"days" : iota(6),
+								"times" : iota(numTimeBlocksPerDay),
+								"numTimesPerDay" : numTimeBlocksPerDay,
+								"widgetData" : widgetData.usersFreeTimes[userid]
+						};
+						// Render template in calendar container
+            sakai.api.Util.TemplateRenderer($templateContainer, daysAndTimes, $calendarContainer);
+        };
 
         ////////////////////
         // Event Handlers //
@@ -150,47 +174,79 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
 
         /** Binds Settings form */
         $settingsForm.on('submit', function(ev) {
-            // get the selected color
-            var selectedColor = $colorPicker.val();
-
-            // save the selected color
-            sakai.api.Widgets.saveWidgetData(tuid, {
-                'color': selectedColor
-                },
-                function(success, data) {
-                    if (success) {
-                        // Settings finished, switch to Main view
-                        sakai.api.Widgets.Container.informFinish(tuid, 'groupmeetingscheduler');
-                    }
-                }
-            );
-            return false;
+           	sakai.api.Widgets.Container.informFinish(tuid, 'groupmeetingscheduler');
         });
 
         $cancelSettings.on('click', function(){
             sakai.api.Widgets.Container.informFinish(tuid, 'groupmeetingscheduler');
         });
-
+        
+        var bindClick = function () {
+            $calendarContainer.mousedown(downhandler);
+            $calendarContainer.mouseup(uphandler);
+            $calendarContainer.mouseover(overhandler);
+         }
+        
+        var mouseState = 0;
+        // 0 = up
+        // 1 = change to freetime
+        // 2 = change to busytime
 				var downhandler = function(e) {
-					var block = e.target;
-					block.isTimeSet = !block.isTimeSet;
-					block.style.backgroundColor = block.isTimeSet ? '#0f0' : '#f00';
-					mouseState = block.isTimeSet ? 1 : 2;
-					e.preventDefault();
-				};
-	
-				var uphandler = function() {
-					mouseState = 0;
+						
+						var prefix = 'groupmeetingscheduler_timeBlock_';
+						var divID = String(e.target.id);
+						
+						if (divID.indexOf(prefix) != -1) {
+								var idArr = divID.split(prefix);
+						    var timeBlockID = parseInt(idArr[1]);
+						    
+								var timeIndex = widgetData.usersFreeTimes[userid].indexOf(timeBlockID);
+								
+						    if (timeIndex != -1) {
+						    	mouseState = 2;
+									widgetData.usersFreeTimes[userid].splice(timeIndex, 1);
+									
+						    }
+						    else {
+						    	mouseState = 1;
+						    	if(timeIndex == -1){
+										widgetData.usersFreeTimes[userid].push(timeBlockID);
+									}
+						    }
+								e.preventDefault();
+								renderCalendar();
+						}
+		   	};
+				
+				var uphandler = function(e) {
+						mouseState = 0;
+						e.preventDefault();
+						sakai.api.Widgets.saveWidgetData(tuid, widgetData, function(){}, true);
 				};
 	
 				var overhandler = function(e) {
-					if (mouseState == 1) {
-						e.target.style.backgroundColor = '#0f0';
-						e.target.isTimeSet = 1;
-					} else if (mouseState == 2) {
-						e.target.style.backgroundColor = '#f00';
-						e.target.isTimeSet = 0;
-					}
+						var prefix = 'groupmeetingscheduler_timeBlock_';
+						var divID = String(e.target.id);
+						if (divID.indexOf(prefix) != -1) {
+								var idArr = divID.split(prefix);
+						  	var timeBlockID = parseInt(idArr[1]);
+								var timeIndex = widgetData.usersFreeTimes[userid].indexOf(timeBlockID);
+								if (mouseState == 1) {
+									if(timeIndex == -1){
+										widgetData.usersFreeTimes[userid].push(timeBlockID);
+										renderCalendar();
+									}
+
+								} 
+								else if (mouseState == 2) {
+									if(timeIndex != -1){
+										widgetData.usersFreeTimes[userid].splice(timeIndex, 1);
+										renderCalendar();
+									}
+								}
+						}
+						e.preventDefault();
+						
 				};
         /////////////////////////////
         // Initialization function //
@@ -202,12 +258,11 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
          * and shows the correct view.
          */
         var doInit = function() {
+        		initDayArray();
+        		//console.log("DayArray Initialized");
             if (showSettings) {
                 // set up Settings view
-
-                // get the preferred color & set the color picker dropdown
-                getPreferredColor(setDropdownColor);
-
+                
                 // show the Settings view
                 $settingsContainer.show();
             } else {
@@ -215,13 +270,39 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
 								
                 // get data about the current user
                 var me = sakai.data.me;
-
-                // set the text of the usernameContainer <span> element to
-                // the current user's first name
-                $usernameContainer.text(sakai.api.User.getFirstName(me.profile));
-
-                // get the preferred color and show the Main view
-                getPreferredColor(showMainView);
+                sakai.api.Widgets.loadWidgetData(tuid, function(success, data) {
+							
+										//TODO:  Make this and loadMeData take success into account; what to do in failure case?
+										if (success) {
+											widgetData = data;
+										}
+										else {
+											console.log("Loading widget data failed");
+										}
+										sakai.api.User.loadMeData(function(success, data){
+													//Only begin to create data when user info retrieved.
+													userid = data.user.userid;
+													//Create user free time array if we've never seen this user before
+													//
+													//
+													if (widgetData.usersFreeTimes == undefined) {	
+															widgetData.usersFreeTimes = {};
+															widgetData.usersFreeTimes[userid] = [];
+															console.log("WidgetData undefined");
+													}
+													else if(!widgetData.usersFreeTimes.hasOwnProperty(userid)){
+															widgetData.usersFreeTimes[userid] = [];
+															console.log("WidgetData has no entry for user");
+													}
+													else if(typeof(widgetData.usersFreeTimes[userid]) == "string"){
+															widgetData.usersFreeTimes[userid] = [];
+															console.log("WidgetData is String");
+													}
+													renderCalendar();
+                          $mainContainer.show();
+                          bindClick();
+										});
+								});
             }
         };
 
