@@ -47,94 +47,13 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
         var $cancelSettings = $('#groupmeetingscheduler_cancel_settings', $rootel);
         var $usernameContainer = $('#groupmeetingscheduler_username', $rootel);
         var $templateContainer = $('#groupmeetingscheduler_template', $rootel);
-				var $calendarContainer = $('#groupmeetingscheduler_calendar', $rootel);
-				var $debugContainer = $('#groupmeetingscheduler_debug', $rootel);
-				
-				
-				/////////////
-        // Objects //
-        /////////////
-				
-				// Contains all the information for a
-				// single day in the calendar
-				var DayBlock = function(startIndex, endIndex) {
-						this.startIndex = startIndex;
-						this.endIndex = endIndex;
-						this.id = 0;
-				}
-				// Contains all the information for a 
-				// single (15min) time slot in the calendar
-				var TimeBlock = function(isFreeTime, id) {
-        		this.isFreeTime = isFreeTime;
-        		this.id = id;
-        }
-        // Sets a time block as free (true) or busy (false)
-        TimeBlock.prototype.setFreeTime = function(isFreeTime) {
-        	this.isFreeTime = isFreeTime;
-        }
-        
-		    TimeBlock.prototype.switchTime = function() {
-        	this.isFreeTime = !this.isFreeTime;
-        }
-        var numTimeBlocksPerDay = 30;
-        // Array of (7) DayBlocks
-        var dayArray = [];
-        
-				var widgetData = {
-						usersFreeTimes:{}
-				};
-				var userid = "";
-				
-        function initDayArray() {
-		     	for (var j = 0; j < 7; j++) {
-		      		// Array of TimeBlocks for each day
-						  var timeArray = [];
-						  for (var i = 0; i < numTimeBlocksPerDay; i++) {
-						  		var timeBlock = new TimeBlock(false, i + j*numTimeBlocksPerDay);
-						  		timeArray[i] = timeBlock;
-						  }
-						  dayArray[j] = timeArray;
-		      }
-		    }
-		    
-		    function updateDayArray(id) {
-		    		var day = 0;
-		    		var time = id;
-		    		while (time >= numTimeBlocksPerDay) {
-		    				day++;
-		    				time -= numTimeBlocksPerDay;
-		    		}
-		    		var timeBlock = dayArray[day][time];
-		    		timeBlock.switchTime();
-		    		dayArray[day][time] = timeBlock;
-		    }
-		    
-		    function getTimeBlock(id) {
-		    		var day = 0;
-		    		var time = id;
-		    		while (time >= numTimeBlocksPerDay) {
-		    				day++;
-		    				time -= numTimeBlocksPerDay;
-		    		}
-		    		timeBlock = dayArray[day][time];
-		    		return timeBlock;
-		    }
-
-				function loadDayArray() {
-						var timeBlockID = 0;
-						var isTimeSet = 0;
-				   	for (var i = 0; i < 7; i++) {
-								for (var j = 0; j < numTimeBlocksPerDay; j++) {
-										timeBlockID = j + i*numTimeBlocksPerDay;
-										timeIndex = widgetData.usersFreeTimes[userid].indexOf(timeBlockID);
-										//console.log(timeBlockID+" "+timeIndex);
-										if (timeIndex != -1) {
-												updateDayArray(timeBlockID);
-												renderCalendar();
-										}
-								}
-				    }
-				}
+		var $calendarContainer = $('#groupmeetingscheduler_calendar', $rootel);
+		var $debugContainer = $('#groupmeetingscheduler_debug', $rootel);
+		var widgetData = {
+			usersFreeTimes:{}
+		};
+		var userid = "";
+		var numTimesPerDay = 30;
 
         /////////////////////////////
         // Settings View functions //
@@ -151,21 +70,21 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
          */
         var renderCalendar = function () {
         		
-        		var iota = function(a) {
-        		    var i = 0;
-        		    var arr = [];
-        		    while (i < a) arr.push(i++);
-        		    return arr;
-        		}
-						// JSON object containing an array of TimeBlocks for each day
-						var daysAndTimes = {
-								"days" : iota(6),
-								"times" : iota(numTimeBlocksPerDay),
-								"numTimesPerDay" : numTimeBlocksPerDay,
-								"widgetData" : widgetData.usersFreeTimes[userid]
-						};
-						// Render template in calendar container
-            sakai.api.Util.TemplateRenderer($templateContainer, daysAndTimes, $calendarContainer);
+        	var iota = function(a) {
+        	    var i = 0;
+        	    var arr = [];
+        	    while (i < a) arr.push(i++);
+        	    return arr;
+        	}
+			// JSON object containing number of days, time slots, and the user's data
+			var calendarData = {
+				"days" : iota(6),
+				"times" : iota(numTimesPerDay),
+				"numTimesPerDay" : numTimesPerDay,
+				"widgetData" : widgetData.usersFreeTimes[userid]
+			};
+			// Render template in calendar container
+            sakai.api.Util.TemplateRenderer($templateContainer, calendarData, $calendarContainer);
         };
 
         ////////////////////
@@ -191,65 +110,63 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
         // 0 = up
         // 1 = change to freetime
         // 2 = change to busytime
-				var downhandler = function(e) {
+		var downhandler = function(e) {
 						
-						var prefix = 'groupmeetingscheduler_timeBlock_';
-						var divID = String(e.target.id);
-						
-						if (divID.indexOf(prefix) != -1) {
-								var idArr = divID.split(prefix);
-						    var timeBlockID = parseInt(idArr[1]);
-						    
-								var timeIndex = widgetData.usersFreeTimes[userid].indexOf(timeBlockID);
-								
-						    if (timeIndex != -1) {
-						    	mouseState = 2;
-									widgetData.usersFreeTimes[userid].splice(timeIndex, 1);
-									
-						    }
-						    else {
-						    	mouseState = 1;
-						    	if(timeIndex == -1){
-										widgetData.usersFreeTimes[userid].push(timeBlockID);
-									}
-						    }
-								e.preventDefault();
-								renderCalendar();
-						}
-		   	};
+		var prefix = 'groupmeetingscheduler_timeBlock_';
+		var divID = String(e.target.id);
 				
-				var uphandler = function(e) {
-						mouseState = 0;
-						e.preventDefault();
-						sakai.api.Widgets.saveWidgetData(tuid, widgetData, function(){}, true);
-				};
+		if (divID.indexOf(prefix) != -1) {
+			var idArr = divID.split(prefix);
+			var timeBlockID = parseInt(idArr[1]);
+						    
+			var timeIndex = widgetData.usersFreeTimes[userid].indexOf(timeBlockID);
+								
+			if (timeIndex != -1) {
+				mouseState = 2;
+				widgetData.usersFreeTimes[userid].splice(timeIndex, 1);
+									
+			}
+			else {
+				mouseState = 1;
+				if(timeIndex == -1){
+					widgetData.usersFreeTimes[userid].push(timeBlockID);
+				}
+			}
+			e.preventDefault();
+				renderCalendar();
+			}
+		};
+				
+		var uphandler = function(e) {
+			mouseState = 0;
+			e.preventDefault();
+			sakai.api.Widgets.saveWidgetData(tuid, widgetData, function(){}, true);
+		};
 	
-				var overhandler = function(e) {
-						var prefix = 'groupmeetingscheduler_timeBlock_';
-						var divID = String(e.target.id);
-						if (divID.indexOf(prefix) != -1) {
-								var idArr = divID.split(prefix);
-						  	var timeBlockID = parseInt(idArr[1]);
-								var timeIndex = widgetData.usersFreeTimes[userid].indexOf(timeBlockID);
-								if (mouseState == 1) {
-									if(timeIndex == -1){
-										widgetData.usersFreeTimes[userid].push(timeBlockID);
-										renderCalendar();
-									}
-
-								} 
-								else if (mouseState == 2) {
-									if(timeIndex != -1){
-										widgetData.usersFreeTimes[userid].splice(timeIndex, 1);
-										renderCalendar();
-									}
-								}
-						}
-						e.preventDefault();
-						
-				};
+		var overhandler = function(e) {
+			var prefix = 'groupmeetingscheduler_timeBlock_';
+			var divID = String(e.target.id);
+			if (divID.indexOf(prefix) != -1) {
+				var idArr = divID.split(prefix);
+			  	var timeBlockID = parseInt(idArr[1]);
+				var timeIndex = widgetData.usersFreeTimes[userid].indexOf(timeBlockID);
+				if (mouseState == 1) {
+					if(timeIndex == -1){
+						widgetData.usersFreeTimes[userid].push(timeBlockID);
+						renderCalendar();
+					}
+				} 
+				else if (mouseState == 2) {
+					if(timeIndex != -1){
+						widgetData.usersFreeTimes[userid].splice(timeIndex, 1);
+						renderCalendar();
+					}
+				}
+			}
+			e.preventDefault();
+		};
         /////////////////////////////
-        // Initialization function //
+	    // Initialization function //
         /////////////////////////////
 
         /**
@@ -258,8 +175,6 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
          * and shows the correct view.
          */
         var doInit = function() {
-        		initDayArray();
-        		//console.log("DayArray Initialized");
             if (showSettings) {
                 // set up Settings view
                 
@@ -268,43 +183,35 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
             } else {
                 // set up Main view
 								
-                // get data about the current user
-                var me = sakai.data.me;
                 sakai.api.Widgets.loadWidgetData(tuid, function(success, data) {
-							
-										//TODO:  Make this and loadMeData take success into account; what to do in failure case?
-										if (success) {
-											widgetData = data;
-										}
-										else {
-											console.log("Loading widget data failed");
-										}
-										sakai.api.User.loadMeData(function(success, data){
-													//Only begin to create data when user info retrieved.
-													userid = data.user.userid;
-													//Create user free time array if we've never seen this user before
-													//
-													//
-													if (widgetData.usersFreeTimes == undefined) {	
-															widgetData.usersFreeTimes = {};
-															widgetData.usersFreeTimes[userid] = [];
-															console.log("WidgetData undefined");
-													}
-													else if(!widgetData.usersFreeTimes.hasOwnProperty(userid)){
-															widgetData.usersFreeTimes[userid] = [];
-															console.log("WidgetData has no entry for user");
-													}
-													else if(typeof(widgetData.usersFreeTimes[userid]) == "string"){
-															widgetData.usersFreeTimes[userid] = [];
-															console.log("WidgetData is String");
-													}
-													renderCalendar();
-                          $mainContainer.show();
-                          bindClick();
-										});
-								});
-            }
-        };
+				//TODO:  Make this and loadMeData take success into account; what to do in failure case?
+					if (success) {
+						widgetData = data;
+					}
+					else {
+						console.log("Loading widget data failed");
+					}
+					sakai.api.User.loadMeData(function(success, data){
+						//Only begin to create data when user info retrieved.
+						userid = data.user.userid;
+						//Create user free time array if we've never seen this user before
+						if (widgetData.usersFreeTimes == undefined) {	
+							widgetData.usersFreeTimes = {};
+							widgetData.usersFreeTimes[userid] = [];
+						}
+						else if(!widgetData.usersFreeTimes.hasOwnProperty(userid)){
+							widgetData.usersFreeTimes[userid] = [];
+						}
+						else if(typeof(widgetData.usersFreeTimes[userid]) == "string"){
+							widgetData.usersFreeTimes[userid] = [];
+						}
+						renderCalendar();
+                        $mainContainer.show();
+                       	bindClick();
+					}); // end loadMeData
+				}); // end loadWidgetData
+            } // end else statement
+        }; // end doInit
 
         // run the initialization function when the widget object loads
         doInit();
