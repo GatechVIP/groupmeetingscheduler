@@ -25,3 +25,21 @@
 .groupmeetingscheduler.s3d-widget .s3d-widget-titlebar .widget_title{
 	background: url(/devwidgets/groupmeetingscheduler/images/groupmeetingscheduler_icon.png) 17px 18px no-repeat;
 }
+.dayBlock {
+	display: inline-block;
+	padding: 0;
+}
+.freetime {
+	background-color: #0F0;
+	width: 50px; 
+	height: 10px; 
+	border: black solid 1px; 
+	padding: 0;
+}
+.busytime {
+	background-color: #F00;
+	width: 50px; 
+	height: 10px; 
+	border: black solid 1px;
+	padding: 0;
+}
