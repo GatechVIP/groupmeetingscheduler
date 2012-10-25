@@ -25,8 +25,8 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
      * @class groupmeetingscheduler
      *
      * @description
-     * My Hello World is a dashboard widget that says hello to the current user
-     * with text in the color of their choosing
+     * Group Meeting Scheduler widget allows users to find a weekly group
+     * meeting time based on all members' availability
      *
      * @version 0.0.1
      * @param {String} tuid Unique id of the widget
@@ -34,11 +34,10 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
      */
     sakai_global.groupmeetingscheduler = function(tuid, showSettings) {
 
+
         /////////////////////////////
         // Configuration variables //
         /////////////////////////////
-
-        var DEFAULT_COLOR = '#000000';  // default text color is black
 
         // DOM jQuery Objects
         var $rootel = $('#' + tuid);  // unique container for each widget instance
@@ -46,127 +45,47 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
         var $settingsContainer = $('#groupmeetingscheduler_settings', $rootel);
         var $settingsForm = $('#groupmeetingscheduler_settings_form', $rootel);
         var $cancelSettings = $('#groupmeetingscheduler_cancel_settings', $rootel);
-        var $colorPicker = $('#groupmeetingscheduler_color', $rootel);
         var $usernameContainer = $('#groupmeetingscheduler_username', $rootel);
-				var $calendarContainer = $('#groupmeetingscheduler_calendar', $rootel);
-
-        ///////////////////////
-        // Utility functions //
-        ///////////////////////
-
-        /**
-         * Checks if the provided color argument is non-empty and returns the color
-         * if not empty; if empty, returns the DEFAULT_COLOR
-         *
-         * @param {String} color The hex value of the color
-         */
-        var checkColorArgument = function(color) {
-            // check if color exists and is not an empty string
-            return (color && $.trim(color)) ? $.trim(color) : DEFAULT_COLOR;
-        };
-
-        /**
-         * Gets the preferred color from the server using an asynchronous request
-         *
-         * @param {Object} callback Function to call when the request returns. This
-         * function will be sent a String with the hex value of the preferred color.
-         */
-        var getPreferredColor = function(callback) {
-            // get the data associated with this widget
-            sakai.api.Widgets.loadWidgetData(tuid, function(success, data) {
-                if (success) {
-                    // fetching the data succeeded, send it to the callback function
-                    callback(checkColorArgument(data.color));
-                } else {
-                    // fetching the data failed, we use the DEFAULT_COLOR
-                    callback(DEFAULT_COLOR);
-                }
-            });
-        };
-
-
-        /////////////////////////
-        // Main View functions //
-        /////////////////////////
-
-        /**
-         * Shows the Main view that contains the Hello World text colored in the
-         * provided color argument
-         *
-         * @param {String} color The hex value of the color to set the text
-         * (i.e. '#00FF00')
-         */
-	var widgetData = {usersFreeTimes:{}};
-	var userid = "";
-
-        var showMainView = function(color) {
-		sakai.api.Widgets.loadWidgetData(tuid, function(success, data) {
-			//TODO:  Make this and loadMeData take success into account; what to do in failure case?
-			widgetData = data;
-
-			sakai.api.User.loadMeData(function(success, data){
-						//Only begin to create data when user info retrieved.
-						userid = data.user.userid;
-						//Create user free time array if we've never seen this user before
-						if(!widgetData.usersFreeTimes.hasOwnProperty(userid)){
-							widgetData.usersFreeTimes[userid] = [];
-						}
-						else if(typeof(widgetData.usersFreeTimes[userid]) == "string"){
-							widgetData.usersFreeTimes[userid] = [];
-						}
-
-						// For each day of the week, add a day block
-						for (var i=0; i < 7; i++) {
-							// Day block contains all of the time blocks for one day
-							var dayBlock = document.createElement('div');
-							dayBlock.setAttribute('id', 'groupmeetingscheduler_dayBlock'+ i + $rootel);
-							dayBlock.setAttribute('style', 'display: inline-block;');
-							
-							// Each time block represents some time increment (15min?)
-							for (var j=0; j < 50; j++){
-								var timeBlock = document.createElement('div');
-								timeBlock.setAttribute('id', 'groupmeetingscheduler_timeBlock' + (j+i*50));
-								timeBlock.setAttribute('timeId', (j+i*7));
-								if(widgetData.usersFreeTimes[userid].indexOf(String(j+i*50)) == -1){
-									timeBlock.setAttribute('style', 'width: 50px; height: 10px; background-color: #f00; border: black solid 1px; ');
-								}
-								else{
-									timeBlock.setAttribute('style', 'width: 50px; height: 10px; background-color: #0f0; border: black solid 1px; ');
-								}
-								// Time blocks are added to day blocks
-								dayBlock.appendChild(timeBlock);
-								
-								// Event handlers
-		          					timeBlock.onmousedown = downhandler;
-								timeBlock.onmouseup = uphandler;
-								timeBlock.onmouseover = overhandler;
-							}
-							// Day blocks
-							$calendarContainer.append(dayBlock);
-						}
-						// Show main container
-						$mainContainer.show();
-			});
-
-		});
-						
-        };
-
+        var $templateContainer = $('#groupmeetingscheduler_template', $rootel);
+		var $calendarContainer = $('#groupmeetingscheduler_calendar', $rootel);
+		var $debugContainer = $('#groupmeetingscheduler_debug', $rootel);
+		var widgetData = {
+			usersFreeTimes:{}
+		};
+		var userid = "";
+		var numTimesPerDay = 30;
 
         /////////////////////////////
         // Settings View functions //
         /////////////////////////////
 
-        /**
-         * Sets the color dropdown in the Settings view to the given color
-         *
-         * @param {String} color The hex value of the color
-         */
-        var setDropdownColor = function(color) {
-            // set the color dropdown to the given value
-            $colorPicker.val(checkColorArgument(color));
-        };
 
+        ///////////////////////
+        //     Rendering     //
+        ///////////////////////
+
+        /**
+         * This renders the main calendar view where the user can select and
+         * deselect free time
+         */
+        var renderCalendar = function () {
+        		
+        	var iota = function(a) {
+        	    var i = 0;
+        	    var arr = [];
+        	    while (i < a) arr.push(i++);
+        	    return arr;
+        	}
+			// JSON object containing number of days, time slots, and the user's data
+			var calendarData = {
+				"days" : iota(6),
+				"times" : iota(numTimesPerDay),
+				"numTimesPerDay" : numTimesPerDay,
+				"widgetData" : widgetData.usersFreeTimes[userid]
+			};
+			// Render template in calendar container
+            sakai.api.Util.TemplateRenderer($templateContainer, calendarData, $calendarContainer);
+        };
 
         ////////////////////
         // Event Handlers //
@@ -174,74 +93,80 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
 
         /** Binds Settings form */
         $settingsForm.on('submit', function(ev) {
-            // get the selected color
-            var selectedColor = $colorPicker.val();
-
-            // save the selected color
-            sakai.api.Widgets.saveWidgetData(tuid, {
-                'color': selectedColor
-                },
-                function(success, data) {
-                    if (success) {
-                        // Settings finished, switch to Main view
-                        sakai.api.Widgets.Container.informFinish(tuid, 'groupmeetingscheduler');
-                    }
-                }
-            );
-            return false;
+           	sakai.api.Widgets.Container.informFinish(tuid, 'groupmeetingscheduler');
         });
 
         $cancelSettings.on('click', function(){
             sakai.api.Widgets.Container.informFinish(tuid, 'groupmeetingscheduler');
         });
-		
-		var mouseState = 0;
-				var downhandler = function(e) {
-					var block = e.target;
-					var timeId = block.id.split(/groupmeetingscheduler_timeBlock/)[1];
-					//true for isTimeSet means free time.  
-					var isTimeSet = widgetData.usersFreeTimes[userid].indexOf(timeId) == -1 ? true : false ;
-					var timeIndex = widgetData.usersFreeTimes[userid].indexOf(timeId);
-					if(isTimeSet){
-						if(timeIndex == -1){
-							widgetData.usersFreeTimes[userid].push(timeId);
-						}
-					}
-					else{
-						if(timeIndex != -1){
+        
+        var bindClick = function () {
+            $calendarContainer.mousedown(downhandler);
+            $calendarContainer.mouseup(uphandler);
+            $calendarContainer.mouseover(overhandler);
+         }
+        
+        var mouseState = 0;
+        // 0 = up
+        // 1 = change to freetime
+        // 2 = change to busytime
+		var downhandler = function(e) {
 
-							widgetData.usersFreeTimes[userid].splice(timeIndex, 1);
-						}
-					}
-					block.style.backgroundColor = isTimeSet ? '#0f0' : '#f00';
-					mouseState = isTimeSet ? 1 : 2;
-					e.preventDefault();
-				};
-	
-				var uphandler = function() {
-					mouseState = 0;
-					sakai.api.Widgets.saveWidgetData(tuid, widgetData, function(){}, false);
-				};
-	
-				var overhandler = function(e) {
-					var block = e.target;
-					var timeId = block.id.split(/groupmeetingscheduler_timeBlock/)[1];
-					var timeIndex = widgetData.usersFreeTimes[userid].indexOf(timeId);
-					if (mouseState == 1) {
-						block.style.backgroundColor = '#0f0';
-						if(timeIndex == -1){
-							widgetData.usersFreeTimes[userid].push(timeId);
-						}
+		var prefix = 'groupmeetingscheduler_timeBlock_';
+		var divID = String(e.target.id);
 
-					} else if (mouseState == 2) {
-						block.style.backgroundColor = '#f00';
-						if(timeIndex != -1){
-							widgetData.usersFreeTimes[userid].splice(timeIndex, 1);
-						}
+		if (divID.indexOf(prefix) != -1) {
+			var idArr = divID.split(prefix);
+			var timeBlockID = parseInt(idArr[1]);
+
+			var timeIndex = widgetData.usersFreeTimes[userid].indexOf(timeBlockID);
+
+			if (timeIndex != -1) {
+				mouseState = 2;
+				widgetData.usersFreeTimes[userid].splice(timeIndex, 1);
+
+			}
+			else {
+				mouseState = 1;
+				if(timeIndex == -1){
+					widgetData.usersFreeTimes[userid].push(timeBlockID);
+				}
+			}
+			e.preventDefault();
+				renderCalendar();
+			}
+		};
+
+		var uphandler = function(e) {
+			mouseState = 0;
+			e.preventDefault();
+			sakai.api.Widgets.saveWidgetData(tuid, widgetData, function(){}, true);
+		};
+
+		var overhandler = function(e) {
+			var prefix = 'groupmeetingscheduler_timeBlock_';
+			var divID = String(e.target.id);
+			if (divID.indexOf(prefix) != -1) {
+				var idArr = divID.split(prefix);
+			  	var timeBlockID = parseInt(idArr[1]);
+				var timeIndex = widgetData.usersFreeTimes[userid].indexOf(timeBlockID);
+				if (mouseState == 1) {
+					if(timeIndex == -1){
+						widgetData.usersFreeTimes[userid].push(timeBlockID);
+						renderCalendar();
 					}
-				};
+				} 
+				else if (mouseState == 2) {
+					if(timeIndex != -1){
+						widgetData.usersFreeTimes[userid].splice(timeIndex, 1);
+						renderCalendar();
+					}
+				}
+			}
+			e.preventDefault();
+		};
         /////////////////////////////
-        // Initialization function //
+	    // Initialization function //
         /////////////////////////////
 
         /**
@@ -252,26 +177,41 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
         var doInit = function() {
             if (showSettings) {
                 // set up Settings view
-
-                // get the preferred color & set the color picker dropdown
-                getPreferredColor(setDropdownColor);
-
+                
                 // show the Settings view
                 $settingsContainer.show();
             } else {
                 // set up Main view
-								
-                // get data about the current user
-                var me = sakai.data.me;
 
-                // set the text of the usernameContainer <span> element to
-                // the current user's first name
-                $usernameContainer.text(sakai.api.User.getFirstName(me.profile));
-
-                // get the preferred color and show the Main view
-                getPreferredColor(showMainView);
-            }
-        };
+                sakai.api.Widgets.loadWidgetData(tuid, function(success, data) {
+				//TODO:  Make this and loadMeData take success into account; what to do in failure case?
+					if (success) {
+						widgetData = data;
+					}
+					else {
+						console.log("Loading widget data failed");
+					}
+					sakai.api.User.loadMeData(function(success, data){
+						//Only begin to create data when user info retrieved.
+						userid = data.user.userid;
+						//Create user free time array if we've never seen this user before
+						if (widgetData.usersFreeTimes == undefined) {	
+							widgetData.usersFreeTimes = {};
+							widgetData.usersFreeTimes[userid] = [];
+						}
+						else if(!widgetData.usersFreeTimes.hasOwnProperty(userid)){
+							widgetData.usersFreeTimes[userid] = [];
+						}
+						else if(typeof(widgetData.usersFreeTimes[userid]) == "string"){
+							widgetData.usersFreeTimes[userid] = [];
+						}
+						renderCalendar();
+                        $mainContainer.show();
+                       	bindClick();
+					}); // end loadMeData
+				}); // end loadWidgetData
+            } // end else statement
+        }; // end doInit
 
         // run the initialization function when the widget object loads
         doInit();

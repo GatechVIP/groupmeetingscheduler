@@ -5,22 +5,32 @@
 <div class="groupmeetingscheduler_widget">
     <!-- MAIN VIEW -->
     <div id="groupmeetingscheduler_main" style="display:none;">
-        <p>__MSG__HELLO__, <span id="groupmeetingscheduler_username"></span>. __MSG__INSTR__</p>
-        
-        <div id="groupmeetingscheduler_calendar">
-        </div>
-    
+        <!--<p>__MSG__HELLO__, <span id="groupmeetingscheduler_username"></span>. __MSG__INSTR__</p>-->
+        <h1> Select your free time. </h1>
+				<div id="groupmeetingscheduler_template"><!--
+				    		{for day in days}
+						  		<div class="dayBlock">
+											{for time in times}
+												<div id="groupmeetingscheduler_timeBlock_${day*numTimesPerDay + time}" class="
+												{if widgetData.indexOf(day*numTimesPerDay + time) != -1}freetime
+													{else}busytime
+												{/if}">
+												</div>
+											{/for}
+									</div>
+								{/for}
+		    -->
+		    		
+		    		
+		    </div>
+					<div id="groupmeetingscheduler_debug"></div>
+		      <div id="groupmeetingscheduler_calendar"></div>
+		      
     </div>
     <!-- SETTINGS VIEW -->
     <div id="groupmeetingscheduler_settings" style="display:none;">
         <form id="groupmeetingscheduler_settings_form" action="#">
             <p>__MSG__COLOR_TO_USE__:
-                <select id="groupmeetingscheduler_color">
-                    <option value="#000000">__MSG__BLACK__</option>
-                    <option value="#FF0000">__MSG__RED__</option>
-                    <option value="#00FF00">__MSG__GREEN__</option>
-                    <option value="#0000FF">__MSG__BLUE__</option>
-                </select>
             </p>
             <div class="fl-force-right">
                 <button type="button" class="s3d-button s3d-link-button" id="groupmeetingscheduler_cancel_settings">__MSG__CANCEL__</button>
