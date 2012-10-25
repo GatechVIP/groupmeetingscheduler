@@ -7,28 +7,27 @@
     <div id="groupmeetingscheduler_main" style="display:none;">
         <!--<p>__MSG__HELLO__, <span id="groupmeetingscheduler_username"></span>. __MSG__INSTR__</p>-->
         <h1> Select your free time. </h1>
-				<div id="groupmeetingscheduler_template"><!--
-				    		{for day in days}
-						  		<div class="dayBlock">
-											{for time in times}
-												<div id="groupmeetingscheduler_timeBlock_${day*numTimesPerDay + time}" class="
-												{if widgetData.indexOf(day*numTimesPerDay + time) != -1}freetime
-													{else}busytime
-												{/if}">
-												</div>
-											{/for}
-									</div>
-								{/for}
-		    -->
-		    		
-		    		
-		    </div>
-					<div id="groupmeetingscheduler_debug"></div>
-		      <div id="groupmeetingscheduler_calendar"></div>
-		      
+		<div id="groupmeetingscheduler_template"><!--
+    		{for day in days}
+		  		<div class="dayBlock">
+				{for time in times}
+					<div id="groupmeetingscheduler_timeBlock_${day*numTimesPerDay + time}" class="
+						{if widgetData.indexOf(day*numTimesPerDay + time) != -1} freetime
+						{else}busytime
+						{/if}">
+					</div>
+				{/for}
+				</div>
+			{/for}
+		-->
+		</div>
+		<div id="groupmeetingscheduler_debug"></div>
+		<div id="groupmeetingscheduler_calendar"></div>
     </div>
+	
     <!-- SETTINGS VIEW -->
     <div id="groupmeetingscheduler_settings" style="display:none;">
+		<!-- Do we still need these ????? -->
         <form id="groupmeetingscheduler_settings_form" action="#">
             <p>__MSG__COLOR_TO_USE__:
             </p>
@@ -38,6 +37,7 @@
             </div>
             <hr class="fl-hidden fl-push"/>
         </form>
+		<!-- Do we still need these ????? -->
     </div>
 </div>
 

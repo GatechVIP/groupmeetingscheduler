@@ -112,27 +112,24 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
         // 2 = change to busytime
 		var downhandler = function(e) {
 
-		var prefix = 'groupmeetingscheduler_timeBlock_';
-		var divID = String(e.target.id);
+			var prefix = 'groupmeetingscheduler_timeBlock_';
+			var divID = String(e.target.id);
 
-		if (divID.indexOf(prefix) != -1) {
-			var idArr = divID.split(prefix);
-			var timeBlockID = parseInt(idArr[1]);
+			if (divID.indexOf(prefix) != -1) {
+				var idArr = divID.split(prefix);
+				var timeBlockID = parseInt(idArr[1]);
+				var timeIndex = widgetData.usersFreeTimes[userid].indexOf(timeBlockID);
 
-			var timeIndex = widgetData.usersFreeTimes[userid].indexOf(timeBlockID);
-
-			if (timeIndex != -1) {
-				mouseState = 2;
-				widgetData.usersFreeTimes[userid].splice(timeIndex, 1);
-
-			}
-			else {
-				mouseState = 1;
-				if(timeIndex == -1){
-					widgetData.usersFreeTimes[userid].push(timeBlockID);
+				if (timeIndex != -1) {
+					mouseState = 2;
+					widgetData.usersFreeTimes[userid].splice(timeIndex, 1);
+				} else {
+					mouseState = 1;
+					if(timeIndex == -1){
+						widgetData.usersFreeTimes[userid].push(timeBlockID);
+					}
 				}
-			}
-			e.preventDefault();
+				e.preventDefault();
 				renderCalendar();
 			}
 		};
@@ -150,17 +147,12 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
 				var idArr = divID.split(prefix);
 			  	var timeBlockID = parseInt(idArr[1]);
 				var timeIndex = widgetData.usersFreeTimes[userid].indexOf(timeBlockID);
-				if (mouseState == 1) {
-					if(timeIndex == -1){
-						widgetData.usersFreeTimes[userid].push(timeBlockID);
-						renderCalendar();
-					}
-				} 
-				else if (mouseState == 2) {
-					if(timeIndex != -1){
-						widgetData.usersFreeTimes[userid].splice(timeIndex, 1);
-						renderCalendar();
-					}
+				if (mouseState == 1 && timeIndex == -1) {
+					widgetData.usersFreeTimes[userid].push(timeBlockID);
+					renderCalendar();
+				} else if (mouseState == 2 && timeIndex != -1) {
+					widgetData.usersFreeTimes[userid].splice(timeIndex, 1);
+					renderCalendar();
 				}
 			}
 			e.preventDefault();
@@ -177,7 +169,6 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
         var doInit = function() {
             if (showSettings) {
                 // set up Settings view
-                
                 // show the Settings view
                 $settingsContainer.show();
             } else {
@@ -191,18 +182,16 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
 					else {
 						console.log("Loading widget data failed");
 					}
-					sakai.api.User.loadMeData(function(success, data){
+					sakai.api.User.loadMeData(function(success, data) {
 						//Only begin to create data when user info retrieved.
 						userid = data.user.userid;
 						//Create user free time array if we've never seen this user before
 						if (widgetData.usersFreeTimes == undefined) {	
 							widgetData.usersFreeTimes = {};
 							widgetData.usersFreeTimes[userid] = [];
-						}
-						else if(!widgetData.usersFreeTimes.hasOwnProperty(userid)){
+						} else if(!widgetData.usersFreeTimes.hasOwnProperty(userid)){
 							widgetData.usersFreeTimes[userid] = [];
-						}
-						else if(typeof(widgetData.usersFreeTimes[userid]) == "string"){
+						} else if(typeof(widgetData.usersFreeTimes[userid]) == "string"){
 							widgetData.usersFreeTimes[userid] = [];
 						}
 						renderCalendar();
