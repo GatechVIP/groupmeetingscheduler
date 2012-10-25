@@ -90,6 +90,10 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
         ////////////////////
         // Event Handlers //
         ////////////////////
+		
+		var saveData = function(boolArr) {
+			// Code for new saving algorithm goes here!!!!!
+		}
 
         /** Binds Settings form */
         $settingsForm.on('submit', function(ev) {
