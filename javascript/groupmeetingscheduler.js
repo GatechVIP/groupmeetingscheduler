@@ -78,7 +78,9 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
                 'numTimesPerDay': numTimesPerDay
             };
             sakai.api.Util.TemplateRenderer($templateContainer, calendarData, $calendarContainer);
-            $calendarContainer.children('.busytime');
+            $calendarContainer.children('.busytime').each(function(i, ele) {
+                divArr.push(ele);
+            });
         };
         
         var pushGrid = function(data) {
