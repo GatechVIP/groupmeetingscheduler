@@ -11,11 +11,7 @@
     		{for day in days}
 		  		<div class="dayBlock">
 				{for time in times}
-					<div id="groupmeetingscheduler_timeBlock_${day*numTimesPerDay + time}" class="
-						{if widgetData.indexOf(day*numTimesPerDay + time) != -1} freetime
-						{else}busytime
-						{/if}">
-					</div>
+					<div id="groupmeetingscheduler_timeBlock_${day*numTimesPerDay + time}" class="busytime"></div>
 				{/for}
 				</div>
 			{/for}

@@ -49,11 +49,11 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
         var $templateContainer = $('#groupmeetingscheduler_template', $rootel);
         var $calendarContainer = $('#groupmeetingscheduler_calendar', $rootel);
         var $debugContainer = $('#groupmeetingscheduler_debug', $rootel);
-        var widgetData = {
-            usersFreeTimes:{}
-        };
         var userid = "";
         var numTimesPerDay = 30;
+        
+        // Array containing HTML div elements that makes up the grid. Init this in 'initGrid'.
+        var divArr;
 
         /////////////////////////////
         // Settings View functions //
@@ -63,45 +63,43 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
         ///////////////////////
         //     Rendering     //
         ///////////////////////
-
-        /**
-         * This renders the main calendar view where the user can select and
-         * deselect free time
-         */
-        var renderCalendar = function () {
-                
+        
+        var initGrid = function() {
             var iota = function(a) {
                 var i = 0;
                 var arr = [];
                 while (i < a) arr.push(i++);
                 return arr;
             };
-            
-            // JSON object containing number of days, time slots, and the user's data
-            var calendarData = {
-                "days" : iota(6),
-                "times" : iota(numTimesPerDay),
-                "numTimesPerDay" : numTimesPerDay,
-                "widgetData" : widgetData.usersFreeTimes[userid]
+        
+            var data = {
+                'days': iota(6),
+                'times': iota(numTimesPerDay),
+                'numTimesPerDay': numTimesPerDay
             };
-            
-            // Render template in calendar container
             sakai.api.Util.TemplateRenderer($templateContainer, calendarData, $calendarContainer);
+            $calendarContainer.children('.busytime');
         };
-
+        
+        var pushGrid = function(data) {
+            
+        };
+        
         ////////////////////
         // Event Handlers //
         ////////////////////
         
-        // Argument is an array of booleans. Each index in the array represents one time block.
-        // Boolean true for free time, false for busy.
-        var saveData = function(boolArr) {
+        // First argument is an array of booleans. Each index in the array represents one time block.
+        // Boolean true for free time, false for busy. After saving, saveData should call callback with
+        // a boolean argument indicating whether save succeeded.
+        var saveData = function(boolArr, callback) {
             // Code for new saving algorithm goes here!!!!!
         }
         
-        // loadData should return an array of booleans. The array should be in the same format as the input
-        // to saveData function. saveData(loadData()) should be a no-op.
-        var loadData = function() {
+        // loadData should call the callback function with a boolean indicating whether load succeeded 
+        // and an array of booleans representing free/busy time. If the boolean is false (load failed),
+        // the array is meaningless.
+        var loadData = function(callback) {
             // Code for new loading algo goes here!!!
         }
 
@@ -110,7 +108,7 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
             sakai.api.Widgets.Container.informFinish(tuid, 'groupmeetingscheduler');
         });
 
-        $cancelSettings.on('click', function(){
+        $cancelSettings.on('click', function() {
             sakai.api.Widgets.Container.informFinish(tuid, 'groupmeetingscheduler');
         });
         
@@ -185,35 +183,25 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
                 // set up Settings view
                 // show the Settings view
                 $settingsContainer.show();
-            } else {
-                // set up Main view
-
-                sakai.api.Widgets.loadWidgetData(tuid, function(success, data) {
-                //TODO:  Make this and loadMeData take success into account; what to do in failure case?
-                    if (success) {
-                        widgetData = data;
+                return;
+            }
+            
+            // set up Main view
+            initGrid();
+            sakai.api.User.loadMeData(function(success, udata) {
+                if (!success) {
+                    console.info('Load user data failed');
+                    return;
+                }
+                userid = udata.user.userid;
+                loadData(function(success, data) {
+                    if (!success) {
+                        console.info('Load persistence data failed.');
+                        return;
                     }
-                    else {
-                        console.log("Loading widget data failed");
-                    }
-                    sakai.api.User.loadMeData(function(success, data) {
-                        //Only begin to create data when user info retrieved.
-                        userid = data.user.userid;
-                        //Create user free time array if we've never seen this user before
-                        if (widgetData.usersFreeTimes == undefined) {   
-                            widgetData.usersFreeTimes = {};
-                            widgetData.usersFreeTimes[userid] = [];
-                        } else if(!widgetData.usersFreeTimes.hasOwnProperty(userid)){
-                            widgetData.usersFreeTimes[userid] = [];
-                        } else if(typeof(widgetData.usersFreeTimes[userid]) == "string"){
-                            widgetData.usersFreeTimes[userid] = [];
-                        }
-                        renderCalendar();
-                        $mainContainer.show();
-                        bindClick();
-                    }); // end loadMeData
-                }); // end loadWidgetData
-            } // end else statement
+                    pushGrid(data);
+                }); // end loadData
+            }); // end loadMeData
         }; // end doInit
 
         // run the initialization function when the widget object loads
