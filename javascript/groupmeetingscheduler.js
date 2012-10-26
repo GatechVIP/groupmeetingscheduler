@@ -53,7 +53,7 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
         var numTimesPerDay = 30;
         
         // Array containing HTML div elements that makes up the grid. Init this in 'initGrid'.
-        var divArr;
+        var divArr = [];
 
         /////////////////////////////
         // Settings View functions //
@@ -72,19 +72,26 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
                 return arr;
             };
         
-            var data = {
-                'days': iota(6),
+            var calendarData = {
+                'days': iota(7),
                 'times': iota(numTimesPerDay),
                 'numTimesPerDay': numTimesPerDay
             };
             sakai.api.Util.TemplateRenderer($templateContainer, calendarData, $calendarContainer);
-            $calendarContainer.children('.busytime').each(function(i, ele) {
-                divArr.push(ele);
+            
+            $calendarContainer.children('.dayBlock').each(function(i, day) {
+                $(day).children('.busytime').each(function(i, time) {
+                    var jqTime = $(time);
+                    divArr.push(jqTime);
+                });
             });
         };
         
         var pushGrid = function(data) {
-            
+            for (var i = 0; i < data.length; i++) {
+                divArr[i].removeClass('freetime busytime');
+                divArr[i].addClass(data[i] ? 'freetime' : 'busytime');
+            }
         };
         
         ////////////////////
@@ -95,14 +102,26 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
         // Boolean true for free time, false for busy. After saving, saveData should call callback with
         // a boolean argument indicating whether save succeeded.
         var saveData = function(boolArr, callback) {
-            // Code for new saving algorithm goes here!!!!!
+            // STUB!!! This code does not actually work!
+            console.info('Saving...');
+            console.info(boolArr);
+            if (callback) callback();
         }
         
         // loadData should call the callback function with a boolean indicating whether load succeeded 
         // and an array of booleans representing free/busy time. If the boolean is false (load failed),
         // the array is meaningless.
         var loadData = function(callback) {
-            // Code for new loading algo goes here!!!
+            // STUB!!! This code does not actually work!
+            var repeat = function(x, rep) {
+                var arr = [];
+                while (rep--) {
+                    arr.push(x);
+                }
+                return arr;
+            };
+            
+            if (callback) callback(true, repeat(false, 30*7));
         }
 
         /** Binds Settings form */
@@ -120,55 +139,37 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
             $calendarContainer.mouseover(overhandler);
          }
         
-        var mouseState = 0;
-        // 0 = up
-        // 1 = change to freetime
-        // 2 = change to busytime
+        var MouseState = {
+            'UP': 0,
+            'TOFREE': 1,
+            'TOBUSY': 2
+        };
+        var mouseState = MouseState.UP;
+        
         var downhandler = function(e) {
-
-            var prefix = 'groupmeetingscheduler_timeBlock_';
-            var divID = String(e.target.id);
-
-            if (divID.indexOf(prefix) != -1) {
-                var idArr = divID.split(prefix);
-                var timeBlockID = parseInt(idArr[1]);
-                var timeIndex = widgetData.usersFreeTimes[userid].indexOf(timeBlockID);
-
-                if (timeIndex != -1) {
-                    mouseState = 2;
-                    widgetData.usersFreeTimes[userid].splice(timeIndex, 1);
-                } else {
-                    mouseState = 1;
-                    if(timeIndex == -1){
-                        widgetData.usersFreeTimes[userid].push(timeBlockID);
-                    }
-                }
-                e.preventDefault();
-                renderCalendar();
-            }
+            var ele = $(e.target);
+            ele.toggleClass('freetime busytime');
+            
+            mouseState = ele.hasClass('freetime') ? MouseState.TOFREE : MouseState.TOBUSY;
+            e.preventDefault();
         };
 
         var uphandler = function(e) {
-            mouseState = 0;
+            mouseState = MouseState.UP;
             e.preventDefault();
-            sakai.api.Widgets.saveWidgetData(tuid, widgetData, function(){}, true);
+            saveData(divArr.map(function(e) {
+                return e.hasClass('freetime');
+            }));
         };
 
         var overhandler = function(e) {
-            var prefix = 'groupmeetingscheduler_timeBlock_';
-            var divID = String(e.target.id);
-            if (divID.indexOf(prefix) != -1) {
-                var idArr = divID.split(prefix);
-                var timeBlockID = parseInt(idArr[1]);
-                var timeIndex = widgetData.usersFreeTimes[userid].indexOf(timeBlockID);
-                if (mouseState == 1 && timeIndex == -1) {
-                    widgetData.usersFreeTimes[userid].push(timeBlockID);
-                    renderCalendar();
-                } else if (mouseState == 2 && timeIndex != -1) {
-                    widgetData.usersFreeTimes[userid].splice(timeIndex, 1);
-                    renderCalendar();
-                }
+            if (mouseState === MouseState.UP) {
+                return;
             }
+            
+            var ele = $(e.target);
+            ele.removeClass('freetime busytime');
+            ele.addClass(mouseState === MouseState.TOFREE ? 'freetime' : 'busytime');
             e.preventDefault();
         };
         /////////////////////////////
@@ -189,7 +190,6 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
             }
             
             // set up Main view
-            initGrid();
             sakai.api.User.loadMeData(function(success, udata) {
                 if (!success) {
                     console.info('Load user data failed');
@@ -201,6 +201,9 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
                         console.info('Load persistence data failed.');
                         return;
                     }
+                    initGrid();
+                    $mainContainer.show();
+                    bindClick();
                     pushGrid(data);
                 }); // end loadData
             }); // end loadMeData
