@@ -64,6 +64,7 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
         //     Rendering     //
         ///////////////////////
         
+        // Create the grid on the page
         var initGrid = function() {
             var iota = function(a) {
                 var i = 0;
@@ -79,6 +80,8 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
             };
             sakai.api.Util.TemplateRenderer($templateContainer, calendarData, $calendarContainer);
             
+            // All blocks are initially set to busytime. So we can filter by the busytime class.
+            // Creates an array of div elements in divArr
             $calendarContainer.children('.dayBlock').each(function(i, day) {
                 $(day).children('.busytime').each(function(i, time) {
                     var jqTime = $(time);
@@ -87,6 +90,8 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
             });
         };
         
+        // Makes the HTML grid represent the data. Data must be a boolean array with length
+        // equals to number of blocks in the HTML.
         var pushGrid = function(data) {
             for (var i = 0; i < data.length; i++) {
                 divArr[i].removeClass('freetime busytime');
@@ -146,6 +151,7 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
         };
         var mouseState = MouseState.UP;
         
+        // Switches freetime/busytime. If changed to freetime, mouseState = TOFREE, else mouseState = TOBUSY
         var downhandler = function(e) {
             var ele = $(e.target);
             ele.toggleClass('freetime busytime');
@@ -154,6 +160,7 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
             e.preventDefault();
         };
 
+        // Changes mouseState to UP. saveData.
         var uphandler = function(e) {
             mouseState = MouseState.UP;
             e.preventDefault();
@@ -162,6 +169,7 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
             }));
         };
 
+        // Changes the block to freetime/busytime depending on the mouseState. If mouseState is UP, it does nothing
         var overhandler = function(e) {
             if (mouseState === MouseState.UP) {
                 return;
