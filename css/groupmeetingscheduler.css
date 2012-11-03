@@ -29,17 +29,17 @@
 	display: inline-block;
 	padding: 0;
 }
-.freetime {
-	background-color: #0F0;
-	width: 50px; 
+
+.timeBlock {
+    width: 50px; 
 	height: 10px; 
 	border: black solid 1px; 
 	padding: 0;
 }
+
+.freetime {
+	background-color: #0F0;
+}
 .busytime {
 	background-color: #F00;
-	width: 50px; 
-	height: 10px; 
-	border: black solid 1px;
-	padding: 0;
 }

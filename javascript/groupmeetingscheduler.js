@@ -42,13 +42,9 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
         // DOM jQuery Objects
         var $rootel = $('#' + tuid);  // unique container for each widget instance
         var $mainContainer = $('#groupmeetingscheduler_main', $rootel);
-        var $settingsContainer = $('#groupmeetingscheduler_settings', $rootel);
-        var $settingsForm = $('#groupmeetingscheduler_settings_form', $rootel);
-        var $cancelSettings = $('#groupmeetingscheduler_cancel_settings', $rootel);
-        var $usernameContainer = $('#groupmeetingscheduler_username', $rootel);
         var $templateContainer = $('#groupmeetingscheduler_template', $rootel);
         var $calendarContainer = $('#groupmeetingscheduler_calendar', $rootel);
-        var $debugContainer = $('#groupmeetingscheduler_debug', $rootel);
+        var $aggregateContainer = $('#groupmeetingscheduler_aggregate', $rootel);
         var userid = "";
         var numTimesPerDay = 30;
         
@@ -64,18 +60,20 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
         //     Rendering     //
         ///////////////////////
         
+        // Convenience function. Creates an array from 0 to a-1.
+        var iota = function(a) {
+            var i = 0;
+            var arr = [];
+            while (i < a) arr.push(i++);
+            return arr;
+        };
+        
         // Create the grid on the page
         var initGrid = function() {
-            var iota = function(a) {
-                var i = 0;
-                var arr = [];
-                while (i < a) arr.push(i++);
-                return arr;
-            };
-        
             var calendarData = {
                 'days': iota(7),
                 'times': iota(numTimesPerDay),
+                'divClass': 'busytime',
                 'numTimesPerDay': numTimesPerDay
             };
             sakai.api.Util.TemplateRenderer($templateContainer, calendarData, $calendarContainer);
@@ -83,9 +81,9 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
             // All blocks are initially set to busytime. So we can filter by the busytime class.
             // Creates an array of div elements in divArr
             $calendarContainer.children('.dayBlock').each(function(i, day) {
-                $(day).children('.busytime').each(function(i, time) {
-                    var jqTime = $(time);
-                    divArr.push(jqTime);
+                $(day).children('.timeBlock').each(function(i, time) {
+                    var $time = $(time);
+                    divArr.push($time);
                 });
             });
         };
@@ -97,6 +95,28 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
                 divArr[i].removeClass('freetime busytime');
                 divArr[i].addClass(data[i] ? 'freetime' : 'busytime');
             }
+        };
+        
+        // Loads and display aggregate view. The format of "data" is specified in GitHub issue #17.
+        var loadAggregateView = function(aggrData) {
+            var rgba = function(r, g, b, a) {
+                var flr = Math.floor;
+                return 'rgba(' + flr(r) + ',' + flr(g) + ',' + flr(b) + ',' + a + ')';
+            };
+            var data = {
+                'days': iota(7),
+                'times': iota(numTimesPerDay),
+                'divClass': '',
+                'numTimesPerDay': numTimesPerDay
+            };
+            sakai.api.Util.TemplateRenderer($templateContainer, data, $aggregateContainer);
+            $aggregateContainer.children('.dayBlock').each(function(i, day) {
+                $(day).children('.timeBlock').each(function(j, time) {
+                    var ratio = aggrData.times[i*numTimesPerDay + j].length / aggrData.total;
+                    time.style.backgroundColor = rgba(0, 255, 0, ratio);
+                });
+            });
+            $aggregateContainer.show();
         };
         
         ////////////////////
@@ -111,7 +131,7 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
             console.info('Saving...');
             console.info(boolArr);
             if (callback) callback();
-        }
+        };
         
         // loadData should call the callback function with a boolean indicating whether load succeeded 
         // and an array of booleans representing free/busy time. If the boolean is false (load failed),
@@ -127,23 +147,17 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
             };
             
             if (callback) callback(true, repeat(false, 30*7));
-        }
-
-        /** Binds Settings form */
-        $settingsForm.on('submit', function(ev) {
-            sakai.api.Widgets.Container.informFinish(tuid, 'groupmeetingscheduler');
-        });
-
-        $cancelSettings.on('click', function() {
-            sakai.api.Widgets.Container.informFinish(tuid, 'groupmeetingscheduler');
-        });
+        };
         
         var bindClick = function () {
             $calendarContainer.mousedown(downhandler);
             $calendarContainer.mouseup(uphandler);
             $calendarContainer.mouseover(overhandler);
-         }
+        };
         
+        /**
+         * "Enum" for mouse states
+         */
         var MouseState = {
             'UP': 0,
             'TOFREE': 1,
@@ -151,16 +165,17 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
         };
         var mouseState = MouseState.UP;
         
-        // Switches freetime/busytime. If changed to freetime, mouseState = TOFREE, else mouseState = TOBUSY
+        /** Switches freetime/busytime. If changed to freetime, mouseState = TOFREE, else mouseState = TOBUSY */
         var downhandler = function(e) {
             var ele = $(e.target);
-            ele.toggleClass('freetime busytime');
+            if (!ele.hasClass('timeBlock')) return;
             
+            ele.toggleClass('freetime busytime');
             mouseState = ele.hasClass('freetime') ? MouseState.TOFREE : MouseState.TOBUSY;
             e.preventDefault();
         };
 
-        // Changes mouseState to UP. saveData.
+        /** Changes mouseState to UP. saveData. */
         var uphandler = function(e) {
             mouseState = MouseState.UP;
             e.preventDefault();
@@ -169,34 +184,30 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
             }));
         };
 
-        // Changes the block to freetime/busytime depending on the mouseState. If mouseState is UP, it does nothing
+        /** Changes the block to freetime/busytime depending on the mouseState. If mouseState is UP, it does nothing */
         var overhandler = function(e) {
             if (mouseState === MouseState.UP) {
                 return;
             }
             
             var ele = $(e.target);
+            if (!ele.hasClass('timeBlock')) return;
+            
             ele.removeClass('freetime busytime');
             ele.addClass(mouseState === MouseState.TOFREE ? 'freetime' : 'busytime');
             e.preventDefault();
         };
+        
         /////////////////////////////
         // Initialization function //
         /////////////////////////////
-
+        
         /**
          * Initialization function that is run when the widget is loaded. Determines
          * which mode the widget is in (settings or main), loads the necessary data
          * and shows the correct view.
          */
         var doInit = function() {
-            if (showSettings) {
-                // set up Settings view
-                // show the Settings view
-                $settingsContainer.show();
-                return;
-            }
-            
             // set up Main view
             sakai.api.User.loadMeData(function(success, udata) {
                 if (!success) {
@@ -215,6 +226,20 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
                     pushGrid(data);
                 }); // end loadData
             }); // end loadMeData
+            
+            // Test loadAggregateView
+            var replicate = function(arr, num) {
+                var ret = [];
+                for (var i = 0; i < num; i++) {
+                    ret = ret.concat(arr);
+                }
+                return ret;
+            };
+            var aggrData = {
+                'total': 5,
+                'times': [['u1', 'u2']].concat(replicate([[]], 7*numTimesPerDay - 1))
+            };
+            loadAggregateView(aggrData);
         }; // end doInit
 
         // run the initialization function when the widget object loads
