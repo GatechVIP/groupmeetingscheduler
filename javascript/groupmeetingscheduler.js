@@ -44,7 +44,10 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
         var $mainContainer = $('#groupmeetingscheduler_main', $rootel);
         var $templateContainer = $('#groupmeetingscheduler_template', $rootel);
         var $calendarContainer = $('#groupmeetingscheduler_calendar', $rootel);
+        var $aggregateTemplate = $('#groupmeetingscheduler_aggregate_template', $rootel);
         var $aggregateContainer = $('#groupmeetingscheduler_aggregate', $rootel);
+        var $peopleListTemplate = $('#groupmeetingscheduler_peoplelist_template', $rootel);
+        var $peopleListContainer = $('#groupmeetingscheduler_peoplelist', $rootel);
         var userid = "";
         var numTimesPerDay = 30;
         
@@ -73,8 +76,6 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
             var calendarData = {
                 'days': iota(7),
                 'times': iota(numTimesPerDay),
-                'divClass': 'busytime',
-                'numTimesPerDay': numTimesPerDay
             };
             sakai.api.Util.TemplateRenderer($templateContainer, calendarData, $calendarContainer);
             
@@ -106,16 +107,31 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
             var data = {
                 'days': iota(7),
                 'times': iota(numTimesPerDay),
-                'divClass': '',
                 'numTimesPerDay': numTimesPerDay
             };
-            sakai.api.Util.TemplateRenderer($templateContainer, data, $aggregateContainer);
+            sakai.api.Util.TemplateRenderer($aggregateTemplate, data, $aggregateContainer);
             $aggregateContainer.children('.dayBlock').each(function(i, day) {
                 $(day).children('.timeBlock').each(function(j, time) {
                     var ratio = aggrData.times[i*numTimesPerDay + j].length / aggrData.total;
                     time.style.backgroundColor = rgba(0, 255, 0, ratio);
                 });
             });
+            
+            $aggregateContainer.mouseover(function(e) {
+                var prefix = 'aggregate_';
+                var $e = $(e.target);
+                console.info($e);
+                var id = $e.attr('id');
+                if (!id || id.indexOf(prefix) !== 0) return;
+                
+                var idnum = parseInt(id.substr(prefix.length));
+                var data = {
+                    'num': aggrData.times[idnum].length,
+                    'users': aggrData.times[idnum]
+                };
+                sakai.api.Util.TemplateRenderer($peopleListTemplate, data, $peopleListContainer);
+            });
+            
             $aggregateContainer.show();
         };
         
@@ -236,8 +252,8 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
                 return ret;
             };
             var aggrData = {
-                'total': 5,
-                'times': [['u1', 'u2']].concat(replicate([[]], 7*numTimesPerDay - 1))
+                'total': 2,
+                'times': replicate([['u1']], 5).concat(replicate([['u1','u2']], 5)).concat(replicate([['u1']], 5)).concat(replicate([[]], 30*7-15))
             };
             loadAggregateView(aggrData);
         }; // end doInit

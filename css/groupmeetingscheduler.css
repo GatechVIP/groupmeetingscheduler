@@ -25,6 +25,11 @@
 .groupmeetingscheduler.s3d-widget .s3d-widget-titlebar .widget_title{
 	background: url(/devwidgets/groupmeetingscheduler/images/groupmeetingscheduler_icon.png) 17px 18px no-repeat;
 }
+
+.notext {
+    font-size: 0;
+}
+
 .dayBlock {
 	display: inline-block;
 	padding: 0;

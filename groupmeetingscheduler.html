@@ -5,20 +5,38 @@
 <div class="groupmeetingscheduler_widget">
     <!-- MAIN VIEW -->
     <div id="groupmeetingscheduler_main" style="display:none;">
-        <h1> Select your free time. </h1>
+        <h1>Select your free time.</h1>
 		<div id="groupmeetingscheduler_template"><!--
     		{for day in days}
 		  		<div class="dayBlock">
 				{for time in times}
-					<div class="timeBlock ${divClass}"></div>
+					<div class="timeBlock busytime"></div>
 				{/for}
 				</div>
 			{/for}
 		    -->
 		</div>
 		<div id="groupmeetingscheduler_debug"></div>
-		<div id="groupmeetingscheduler_calendar"></div>
-        <div id="groupmeetingscheduler_aggregate"></div>
+		<div id="groupmeetingscheduler_calendar" class="notext"></div>
+        
+        <div id="groupmeetingscheduler_aggregate_template"><!--
+            {for day in days}
+		  		<div class="dayBlock">
+				{for time in times}
+					<div id="aggregate_${day*numTimesPerDay + time}" class="timeBlock"></div>
+				{/for}
+				</div>
+			{/for}
+		 --></div>
+        <div id="groupmeetingscheduler_aggregate" class="notext"></div>
+        
+        <div id="groupmeetingscheduler_peoplelist_template"><!--
+            Number: ${num}<br/>
+            {for u in users}
+                ${u}<br/>
+            {/for}
+        --></div>
+        <div id="groupmeetingscheduler_peoplelist"></div>
     </div>
 </div>
 
