@@ -5,38 +5,52 @@
 <div class="groupmeetingscheduler_widget">
     <!-- MAIN VIEW -->
     <div id="groupmeetingscheduler_main" style="display:none;">
-        <!--<p>__MSG__HELLO__, <span id="groupmeetingscheduler_username"></span>. __MSG__INSTR__</p>-->
-        <h1> Select your free time. </h1>
-				<div id="groupmeetingscheduler_template"><!--
-				    		{for day in days}
-						  		<div class="dayBlock">
-											{for time in times}
-												<div id="groupmeetingscheduler_timeBlock_${day*numTimesPerDay + time}" class="
-												{if widgetData.indexOf(day*numTimesPerDay + time) != -1}freetime
-													{else}busytime
-												{/if}">
-												</div>
-											{/for}
-									</div>
-								{/for}
-		    -->
-		    		
-		    		
+	    <div id="groupmeetingscheduler_calendarTemplate"><!--
+	        <h1> Select your free time. </h1>
+		<h6> __MSG__INSTR__ </h6>
+		<div class="times">
+		    <br>
+		    {for time in timeArr}
+			<div class="time">
+			    ${time}
+			</div>
+		    {/for}
+		</div>
+		{for day in days}
+		    <div class="dayBlock">
+			<h4>${dayNames[day]}</h4>
+		        {for time in times}
+			    {if hours.indexOf(time) == -1}
+				<div id="groupmeetingscheduler_timeBlock_${day*numTimesPerDay + time}" class="timeBlock&nbsp;
+				    {if widgetData.indexOf(day*numTimesPerDay + time) != -1}
+					freetime
+				    {else}
+					busytime
+				    {/if}">
+				</div>
+			    {else}
+				<div id="groupmeetingscheduler_timeBlock_${day*numTimesPerDay + time}" class="timeBlock&nbsp;
+				    {if widgetData.indexOf(day*numTimesPerDay + time) != -1}
+					freetimeBold
+				    {else}
+					busytimeBold
+				    {/if}">
+				</div>
+			    {/if}
+			{/for}
 		    </div>
-					<div id="groupmeetingscheduler_debug"></div>
-		      <div id="groupmeetingscheduler_calendar"></div>
-		      
+		{/for}
+		--></div>
+		<div id="groupmeetingscheduler_undefinedUserTemplate"><!--
+		    <h1> __MSG__ERROR__ </h1>
+		    <p> __MSG__UNDEFINED_USER__ </p>
+		--></div>
+		<div id="groupmeetingscheduler_calendar"></div>
     </div>
     <!-- SETTINGS VIEW -->
     <div id="groupmeetingscheduler_settings" style="display:none;">
         <form id="groupmeetingscheduler_settings_form" action="#">
-            <p>__MSG__COLOR_TO_USE__:
-            </p>
-            <div class="fl-force-right">
-                <button type="button" class="s3d-button s3d-link-button" id="groupmeetingscheduler_cancel_settings">__MSG__CANCEL__</button>
-                <button type="submit" class="s3d-button s3d-overlay-button">__MSG__SAVE__</button>
-            </div>
-            <hr class="fl-hidden fl-push"/>
+
         </form>
     </div>
 </div>

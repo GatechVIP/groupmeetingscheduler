@@ -19,27 +19,75 @@
 /* Widget Container CSS */
 .groupmeetingscheduler_widget {
 	padding: 0 12px;
+	font-size: 0;
 }
 
 /* Dashboard Widget Icon */
 .groupmeetingscheduler.s3d-widget .s3d-widget-titlebar .widget_title{
 	background: url(/devwidgets/groupmeetingscheduler/images/groupmeetingscheduler_icon.png) 17px 18px no-repeat;
+	font-size: 0;
+}
+.p {
+	padding: 0;
+	font-size: 12px;
+}
+.times {
+	display: inline-block;
+	padding: 3px;
+	margin: 3px;
+	width:60px;
+	vertical-align: middle;	
 }
 .dayBlock {
 	display: inline-block;
 	padding: 0;
+	margin: 0;
+	width:60px;
+	vertical-align: middle;
+}
+.time {
+	width: 60px;
+	height: 15px;
+	text-align: right;
+	font-size: 12px;
+	padding: 0;
+	margin: 0;
+
+}
+.timeBlock {
+	width: 60px;
+	height: 13px;
+	border: #ba0000 solid 1px;
+	padding: 0;
+	margin: 0;	
 }
 .freetime {
-	background-color: #0F0;
-	width: 50px; 
-	height: 10px; 
-	border: black solid 1px; 
+	height: 13px;
+	background-color: #18B218;
+	border: #006800 solid 1px;
 	padding: 0;
+	margin: 0;
 }
 .busytime {
-	background-color: #F00;
-	width: 50px; 
-	height: 10px; 
-	border: black solid 1px;
+	height: 13px;
+	background-color: #F2F2F2;
+	border: #ccc solid 1px;
 	padding: 0;
+	margin: 0;
+}
+.freetimeBold {
+	height: 12px;
+	background-color: #18B218;
+	border: #006800 solid 1px;
+	border-top: #006800 solid 2px;
+	padding: 0;
+	margin: 0;
+}
+.busytimeBold {
+	height: 12px;
+	background-color: #F2F2F2;
+	border: #ccc solid 1px;
+	border-top: #ccc solid 2px;
+	padding: 0;
+	margin: 0;
 }
