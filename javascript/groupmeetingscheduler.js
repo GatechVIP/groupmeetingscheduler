@@ -143,17 +143,35 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
         // Boolean true for free time, false for busy. After saving, saveData should call callback with
         // a boolean argument indicating whether save succeeded.
         var saveData = function(boolArr, callback) {
-            // STUB!!! This code does not actually work!
             console.info('Saving...');
             console.info(boolArr);
-            if (callback) callback();
+            widgetData = {};
+            sakai.api.Widgets.loadWidgetData(tuid, function(success, data){
+		        if(success){
+			        widgetData = data;
+
+                    widgetData.calendarData[userid] = boolArr;
+                    sakai.api.Widgets.saveWidgetData(tuid, widgetData, function(success, data){
+                        if(!success){
+                            if(callback){
+                                callback(false);
+                                return;
+                            }
+                        }
+                    }, false);
+                    if(callback) callback(true);
+		        }
+                else if(callback){
+                    callback(false);
+                    return;
+                }
+	        });
         };
         
         // loadData should call the callback function with a boolean indicating whether load succeeded 
         // and an array of booleans representing free/busy time. If the boolean is false (load failed),
         // the array is meaningless.
-        var loadData = function(callback) {
-            // STUB!!! This code does not actually work!
+        var loadData = function(callback){
             var repeat = function(x, rep) {
                 var arr = [];
                 while (rep--) {
@@ -161,8 +179,49 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
                 }
                 return arr;
             };
+	        widgetData = {};
             
-            if (callback) callback(true, repeat(false, 30*7));
+            sakai.api.Widgets.loadWidgetData(tuid, function(success, data){
+		        if(success){
+			        widgetData = data;
+                    console.info("Previous widget data:");
+                    console.info(data);
+                    //We have never seen this widget before.  Save the tuid and create/save the user times.
+                    if(widgetData.widgetId == undefined){
+		                widgetData.widgetId = tuid;
+                        widgetData.facilitator = userid;
+                        widgetData.calendarData = {};
+                        
+                        sakai.api.Widgets.saveWidgetData(tuid, widgetData, function(success, data){
+			                if(!success){
+                                console.log("Problem saving initial data!");
+                            }
+		                }, true);
+	                }
+                    //If we have never seen this user before, build their default array.
+                    if(widgetData.calendarData[userid] == undefined){
+                        widgetData.calendarData[userid] = repeat(false, 30*7);
+                    }
+                    
+                    console.info("The current user data:");
+                    console.info(widgetData.calendarData[userid]);
+                    if (callback) callback(true, widgetData.calendarData[userid]);
+		        }
+                else{
+                    widgetData.widgetId = tuid;
+                    widgetData.facilitator = userid;
+                    widgetData.calendarData = {};
+                    sakai.api.Widgets.saveWidgetData(tuid, widgetData, function(success, data){
+                        if(!success){
+                            console.log("Problem saving initial data!");
+                        }
+                    }, true);
+                    if (callback) callback(true, repeat(false, 30*7));
+                }
+                
+	        });
+	       
+	        
         };
         
         var bindClick = function () {
