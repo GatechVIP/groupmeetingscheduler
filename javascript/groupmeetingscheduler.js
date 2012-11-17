@@ -50,17 +50,29 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
         var $peopleListContainer = $('#groupmeetingscheduler_peoplelist', $rootel);
         var $undefinedUserTemplate = $('#groupmeetingscheduler_undefinedUser_template', $rootel);
         var $undefinedUserContainer = $('#groupmeetingscheduler_undefinedUser', $rootel);
+	
+	// Days of the weeks
+	var day0 = sakai.api.i18n.General.process('Sun');
+	var day1 = sakai.api.i18n.General.process('Mon');
+	var day2 = sakai.api.i18n.General.process('Tue');
+	var day3 = sakai.api.i18n.General.process('Wed');
+	var day4 = sakai.api.i18n.General.process('Thu');
+	var day5 = sakai.api.i18n.General.process('Fri');
+	var day6 = sakai.api.i18n.General.process('Sat');
         var userid = "";
         
         // Array containing HTML div elements that makes up the grid. Init this in 'initGrid'.
         var divArr = [];
 	
-	var times = [];
-	var hours = [];
-	var initTimes = function (starthr, startmin, endhr, endmin) {
+	// Array containing a label for each timeslot (e.g. 9:30am, 11:15pm, etc.)
+	// timeArr.length returns the number of time slots per day
+	var timeArr = [];	
+	// Puts times (in 15 min increments) in timeArr array to be displayed next to the time slots
+	// Assumes starthr and endhr are in 24-hour time, and that startmin and endmin are
+	// multiples of 15. 
+	var initTimeArr = function (starthr, startmin, endhr, endmin) {
 		var stopMinIndx = 3;
 		var amPM = "am";
-		var spc = "";
 		var count = 0;
 		for (var h = starthr; h <= endhr; h++) {
 			if (h == 12) {
@@ -71,23 +83,16 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
 				endhr-=12;
 				amPM = "pm";
 			}
-			if (h < 12) {
-				spc = " ";
-			}
-			else {
-				spc = "";
-			}
 			if (h == endhr) {
 				stopMinIndx = endmin/15;
 			}
 			for (var m = startmin/15; m <= stopMinIndx; m++) {
 			
 				if (m == 0) {
-					times.push(spc+h+":00"+amPM);
-					hours.push(count);
+					timeArr.push(h+":00"+amPM);
 				}
 				else {
-					times.push(spc+h+":"+m*15+amPM);
+					timeArr.push(h+":"+m*15+amPM);
 				}
 				count++;
 			}
@@ -114,18 +119,10 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
         
         // Create the grid on the page
         var initGrid = function() {
-		var day0 = sakai.api.i18n.General.process('Sun');
-		var day1 = sakai.api.i18n.General.process('Mon');
-		var day2 = sakai.api.i18n.General.process('Tue');
-		var day3 = sakai.api.i18n.General.process('Wed');
-		var day4 = sakai.api.i18n.General.process('Thu');
-		var day5 = sakai.api.i18n.General.process('Fri');
-		var day6 = sakai.api.i18n.General.process('Sat');
             var calendarData = {
                 'days': iota(7),
-                'times': iota(times.length),
-		'timeArr': times,
-		'hours': hours,
+                'times': iota(timeArr.length),
+		'timeArr': timeArr,
 		'dayNames': [day0, day1, day2, day3, day4, day5, day6]
             };
             sakai.api.Util.TemplateRenderer($templateContainer, calendarData, $calendarContainer);
@@ -157,13 +154,15 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
             };
             var data = {
                 'days': iota(7),
-                'times': iota(times.length),
-                'numTimesPerDay': times.length
+                'times': iota(timeArr.length),
+                'numTimesPerDay': timeArr.length,
+		'timeArr': timeArr,
+		'dayNames': [day0, day1, day2, day3, day4, day5, day6]
             };
             sakai.api.Util.TemplateRenderer($aggregateTemplate, data, $aggregateContainer);
             $aggregateContainer.children('.dayBlock').each(function(i, day) {
                 $(day).children('.timeBlock').each(function(j, time) {
-                    var ratio = aggrData.times[i*times.length + j].length / aggrData.total;
+                    var ratio = aggrData.times[i*timeArr.length + j].length / aggrData.total;
                     time.style.backgroundColor = rgba(0, 255, 0, ratio);
                 });
             });
@@ -344,7 +343,7 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
          */
         var doInit = function() {
             // set up Main view
-	    initTimes(9, 30, 20, 45);
+	    initTimeArr(9, 30, 20, 45); // timeslots from 9:30am to 8:45pm
 	    
             sakai.api.User.loadMeData(function(success, udata) {
                 if (!success) {
