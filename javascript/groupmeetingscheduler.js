@@ -158,10 +158,12 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
                 'dayNames': [day0, day1, day2, day3, day4, day5, day6]
             };
             sakai.api.Util.TemplateRenderer($aggregateTemplate, data, $aggregateContainer);
+            var index = 0;
             $aggregateContainer.children('.dayBlock').each(function(i, day) {
                 $(day).children('.timeBlock').each(function(j, time) {
-                    var ratio = aggrData.times[i*timeArr.length + j].length / aggrData.total;
+                    var ratio = aggrData.times[index].length / aggrData.total;
                     time.style.backgroundColor = rgba(0, 255, 0, ratio);
+                    index++;
                 });
             });
             
@@ -358,16 +360,13 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
             }); // end loadMeData
             
             // Test loadAggregateView
-            var replicate = function(arr, num) {
-                var ret = [];
-                for (var i = 0; i < num; i++) {
-                    ret = ret.concat(arr);
-                }
-                return ret;
-            };
+            var times = [];
+            for (var i = 0; i < timeArr.length * 7; i++) {
+                times[i] = i%2 ? ['u1'] : ['u1', 'u2'];
+            }
             var aggrData = {
                 'total': 2,
-                'times': replicate([['u1']], 5).concat(replicate([['u1','u2']], 5)).concat(replicate([['u1']], 5)).concat(replicate([[]], 30*7-15))
+                'times': times
             };
             loadAggregateView(aggrData);
         }; // end doInit
