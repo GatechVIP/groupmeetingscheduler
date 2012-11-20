@@ -51,54 +51,52 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
         var $undefinedUserTemplate = $('#groupmeetingscheduler_undefinedUser_template', $rootel);
         var $undefinedUserContainer = $('#groupmeetingscheduler_undefinedUser', $rootel);
 	
-	// Days of the weeks
-	var day0 = sakai.api.i18n.General.process('Sun');
-	var day1 = sakai.api.i18n.General.process('Mon');
-	var day2 = sakai.api.i18n.General.process('Tue');
-	var day3 = sakai.api.i18n.General.process('Wed');
-	var day4 = sakai.api.i18n.General.process('Thu');
-	var day5 = sakai.api.i18n.General.process('Fri');
-	var day6 = sakai.api.i18n.General.process('Sat');
+        // Days of the weeks
+        var day0 = sakai.api.i18n.General.process('Sun');
+        var day1 = sakai.api.i18n.General.process('Mon');
+        var day2 = sakai.api.i18n.General.process('Tue');
+        var day3 = sakai.api.i18n.General.process('Wed');
+        var day4 = sakai.api.i18n.General.process('Thu');
+        var day5 = sakai.api.i18n.General.process('Fri');
+        var day6 = sakai.api.i18n.General.process('Sat');
         var userid = "";
         
         // Array containing HTML div elements that makes up the grid. Init this in 'initGrid'.
         var divArr = [];
 	
-	// Array containing a label for each timeslot (e.g. 9:30am, 11:15pm, etc.)
-	// timeArr.length returns the number of time slots per day
-	var timeArr = [];	
-	// Puts times (in 15 min increments) in timeArr array to be displayed next to the time slots
-	// Assumes starthr and endhr are in 24-hour time, and that startmin and endmin are
-	// multiples of 15. 
-	var initTimeArr = function (starthr, startmin, endhr, endmin) {
-		var stopMinIndx = 3;
-		var amPM = "am";
-		var count = 0;
-		for (var h = starthr; h <= endhr; h++) {
-			if (h == 12) {
-				amPM = "pm";
-			}
-			if (h > 12) {
-				h-=12;
-				endhr-=12;
-				amPM = "pm";
-			}
-			if (h == endhr) {
-				stopMinIndx = endmin/15;
-			}
-			for (var m = startmin/15; m <= stopMinIndx; m++) {
-			
-				if (m == 0) {
-					timeArr.push(h+":00"+amPM);
-				}
-				else {
-					timeArr.push(h+":"+m*15+amPM);
-				}
-				count++;
-			}
-			startmin = 0;	
-		}
-	};
+        // Array containing a label for each timeslot (e.g. 9:30am, 11:15pm, etc.)
+        // timeArr.length returns the number of time slots per day
+        var timeArr = [];	
+        // Puts times (in 15 min increments) in timeArr array to be displayed next to the time slots
+        // Assumes starthr and endhr are in 24-hour time, and that startmin and endmin are
+        // multiples of 15. 
+        var initTimeArr = function (starthr, startmin, endhr, endmin) {
+            var stopMinIndx = 3;
+            var amPM = "am";
+            var count = 0;
+            for (var h = starthr; h <= endhr; h++) {
+                if (h === 12) {
+                    amPM = "pm";
+                }
+                if (h > 12) {
+                    h-=12;
+                    endhr-=12;
+                    amPM = "pm";
+                }
+                if (h === endhr) {
+                    stopMinIndx = endmin/15;
+                }
+                for (var m = startmin/15; m <= stopMinIndx; m++) {
+                    if (m === 0) {
+                        timeArr.push(h+":00"+amPM);
+                    } else {
+                        timeArr.push(h+":"+m*15+amPM);
+                    }
+                    count++;
+                }
+                startmin = 0;	
+            }
+        };
 
         /////////////////////////////
         // Settings View functions //
@@ -122,8 +120,8 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
             var calendarData = {
                 'days': iota(7),
                 'times': iota(timeArr.length),
-		'timeArr': timeArr,
-		'dayNames': [day0, day1, day2, day3, day4, day5, day6]
+                'timeArr': timeArr,
+                'dayNames': [day0, day1, day2, day3, day4, day5, day6]
             };
             sakai.api.Util.TemplateRenderer($templateContainer, calendarData, $calendarContainer);
             
@@ -156,8 +154,8 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
                 'days': iota(7),
                 'times': iota(timeArr.length),
                 'numTimesPerDay': timeArr.length,
-		'timeArr': timeArr,
-		'dayNames': [day0, day1, day2, day3, day4, day5, day6]
+                'timeArr': timeArr,
+                'dayNames': [day0, day1, day2, day3, day4, day5, day6]
             };
             sakai.api.Util.TemplateRenderer($aggregateTemplate, data, $aggregateContainer);
             $aggregateContainer.children('.dayBlock').each(function(i, day) {
@@ -170,7 +168,6 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
             $aggregateContainer.mouseover(function(e) {
                 var prefix = 'aggregate_';
                 var $e = $(e.target);
-                console.info($e);
                 var id = $e.attr('id');
                 if (!id || id.indexOf(prefix) !== 0) return;
                 
@@ -186,13 +183,13 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
         };
 	
 	
-	/**
-	 * Renders the undefined user template which displays an error
-	 * message to the user.
-	 */
-	var renderUndefinedUserTemplate = function () {
-		sakai.api.Util.TemplateRenderer($undefinedUserTemplate, {}, $undefinedUserContainer);
-	};
+        /**
+        * Renders the undefined user template which displays an error
+        * message to the user.
+        */
+        var renderUndefinedUserTemplate = function () {
+            sakai.api.Util.TemplateRenderer($undefinedUserTemplate, {}, $undefinedUserContainer);
+        };
 	
         ////////////////////
         // Event Handlers //
@@ -205,25 +202,19 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
             console.info('Saving...');
             console.info(boolArr);
             widgetData = {};
-            sakai.api.Widgets.loadWidgetData(tuid, function(success, data){
-		        if(success){
+            sakai.api.Widgets.loadWidgetData(tuid, function(success, data) {
+		        if (success) {
 			        widgetData = data;
 
                     widgetData.calendarData[userid] = boolArr;
-                    sakai.api.Widgets.saveWidgetData(tuid, widgetData, function(success, data){
-                        if(!success){
-                            if(callback){
-                                callback(false);
-                                return;
-                            }
+                    sakai.api.Widgets.saveWidgetData(tuid, widgetData, function(success, data) {
+                        if (!success && callback) {
+                            callback(false);
+                            return;
                         }
                     }, false);
-                    if(callback) callback(true);
 		        }
-                else if(callback){
-                    callback(false);
-                    return;
-                }
+                callback && callback(success ? true : false);
 	        });
         };
         
@@ -241,32 +232,31 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
 	        widgetData = {};
             
             sakai.api.Widgets.loadWidgetData(tuid, function(success, data){
-		        if(success){
+		        if (success) {
 			        widgetData = data;
                     console.info("Previous widget data:");
                     console.info(data);
                     //We have never seen this widget before.  Save the tuid and create/save the user times.
-                    if(widgetData.widgetId == undefined){
+                    if (widgetData.widgetId === undefined) {
 		                widgetData.widgetId = tuid;
                         widgetData.facilitator = userid;
                         widgetData.calendarData = {};
                         
                         sakai.api.Widgets.saveWidgetData(tuid, widgetData, function(success, data){
-			                if(!success){
+			                if (!success) {
                                 console.log("Problem saving initial data!");
                             }
 		                }, true);
 	                }
                     //If we have never seen this user before, build their default array.
-                    if(widgetData.calendarData[userid] == undefined){
+                    if(widgetData.calendarData[userid] === undefined){
                         widgetData.calendarData[userid] = repeat(false, 30*7);
                     }
                     
                     console.info("The current user data:");
                     console.info(widgetData.calendarData[userid]);
-                    if (callback) callback(true, widgetData.calendarData[userid]);
-		        }
-                else{
+                    callback && callback(true, widgetData.calendarData[userid]);
+		        } else {
                     widgetData.widgetId = tuid;
                     widgetData.facilitator = userid;
                     widgetData.calendarData = {};
@@ -275,12 +265,10 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
                             console.log("Problem saving initial data!");
                         }
                     }, true);
-                    if (callback) callback(true, repeat(false, 30*7));
+                    callback && callback(true, repeat(false, 30*7));
                 }
                 
 	        });
-	       
-	        
         };
         
         var bindClick = function () {
@@ -343,7 +331,7 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
          */
         var doInit = function() {
             // set up Main view
-	    initTimeArr(9, 30, 20, 45); // timeslots from 9:30am to 8:45pm
+            initTimeArr(9, 30, 20, 45); // timeslots from 9:30am to 8:45pm
 	    
             sakai.api.User.loadMeData(function(success, udata) {
                 if (!success) {
@@ -352,11 +340,11 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
                 }
                 userid = udata.user.userid;
 		
-		// If user is not logged in, userid is undefined
-		if (userid == undefined) {
-			renderUndefinedUserTemplate();
-			$mainContainer.show();
-		}
+                // If user is not logged in, userid is undefined
+                if (userid === undefined) {
+                    renderUndefinedUserTemplate();
+                    $mainContainer.show();
+                }
                 loadData(function(success, data) {
                     if (!success) {
                         console.info('Load persistence data failed.');
