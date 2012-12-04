@@ -50,6 +50,8 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
         var $peopleListContainer = $('#groupmeetingscheduler_peoplelist', $rootel);
         var $undefinedUserTemplate = $('#groupmeetingscheduler_undefinedUser_template', $rootel);
         var $undefinedUserContainer = $('#groupmeetingscheduler_undefinedUser', $rootel);
+        var $changeViewButton = $('#groupmeetingscheduler_changeview', $rootel);
+        var $aggregateRoot = $('#groupmeetingscheduler_aggregate_root', $rootel);
 	
         // Days of the weeks
         var day0 = sakai.api.i18n.General.process('Sun');
@@ -196,6 +198,11 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
         ////////////////////
         // Event Handlers //
         ////////////////////
+        
+        $changeViewButton.click(function() {
+            $aggregateRoot.toggleClass('groupmeetingscheduler_noshow');
+            $calendarContainer.toggleClass('groupmeetingscheduler_noshow');
+        });
         
         // First argument is an array of booleans. Each index in the array represents one time block.
         // Boolean true for free time, false for busy. After saving, saveData should call callback with
