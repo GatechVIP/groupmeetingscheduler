@@ -39,28 +39,33 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
         // Configuration variables //
         /////////////////////////////
 
-        // DOM jQuery Objects
-        var $rootel = $('#' + tuid);  // unique container for each widget instance
-        var $mainContainer = $('#groupmeetingscheduler_main', $rootel);
-        var $templateContainer = $('#groupmeetingscheduler_template', $rootel);
-        var $calendarContainer = $('#groupmeetingscheduler_calendar', $rootel);
-        var $aggregateTemplate = $('#groupmeetingscheduler_aggregate_template', $rootel);
-        var $aggregateContainer = $('#groupmeetingscheduler_aggregate', $rootel);
-        var $peopleListTemplate = $('#groupmeetingscheduler_peoplelist_template', $rootel);
-        var $peopleListContainer = $('#groupmeetingscheduler_peoplelist', $rootel);
-        var $undefinedUserTemplate = $('#groupmeetingscheduler_undefinedUser_template', $rootel);
-        var $undefinedUserContainer = $('#groupmeetingscheduler_undefinedUser', $rootel);
-        var $changeViewButton = $('#groupmeetingscheduler_changeview', $rootel);
-        var $aggregateRoot = $('#groupmeetingscheduler_aggregate_root', $rootel);
-	
+        // DOM jQuery Objects. Put them in elements as a namespace.
+        var elements = {};
+        elements.$rootel = $('#' + tuid);
+        elements.$mainContainer = $('#groupmeetingscheduler_main', elements.$rootel);
+        elements.$templateContainer = $('#groupmeetingscheduler_template', elements.$rootel);
+        elements.$calendarContainer = $('#groupmeetingscheduler_calendar', elements.$rootel);
+        elements.$aggregateTemplate = $('#groupmeetingscheduler_aggregate_template', elements.$rootel);
+        elements.$aggregateContainer = $('#groupmeetingscheduler_aggregate', elements.$rootel);
+        elements.$peopleListTemplate = $('#groupmeetingscheduler_peoplelist_template', elements.$rootel);
+        elements.$peopleListContainer = $('#groupmeetingscheduler_peoplelist', elements.$rootel);
+        elements.$undefinedUserTemplate = $('#groupmeetingscheduler_undefinedUser_template', elements.$rootel);
+        elements.$undefinedUserContainer = $('#groupmeetingscheduler_undefinedUser', elements.$rootel);
+        elements.$changeViewButton = $('#groupmeetingscheduler_changeview', elements.$rootel);
+        elements.$aggregateRoot = $('#groupmeetingscheduler_aggregate_root', elements.$rootel);
+        
         // Days of the weeks
-        var day0 = sakai.api.i18n.General.process('Sun');
-        var day1 = sakai.api.i18n.General.process('Mon');
-        var day2 = sakai.api.i18n.General.process('Tue');
-        var day3 = sakai.api.i18n.General.process('Wed');
-        var day4 = sakai.api.i18n.General.process('Thu');
-        var day5 = sakai.api.i18n.General.process('Fri');
-        var day6 = sakai.api.i18n.General.process('Sat');
+        var dayNames = [
+            sakai.api.i18n.General.process('Sun'),
+            sakai.api.i18n.General.process('Mon'),
+            sakai.api.i18n.General.process('Tue'),
+            sakai.api.i18n.General.process('Wed'),
+            sakai.api.i18n.General.process('Thu'),
+            sakai.api.i18n.General.process('Fri'),
+            sakai.api.i18n.General.process('Sat')
+        ];
+        
+        
         var userid = "";
         
         // Array containing HTML div elements that makes up the grid. Init this in 'initGrid'.
@@ -68,7 +73,8 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
 	
         // Array containing a label for each timeslot (e.g. 9:30am, 11:15pm, etc.)
         // timeArr.length returns the number of time slots per day
-        var timeArr = [];	
+        var timeArr = [];
+        
         // Puts times (in 15 min increments) in timeArr array to be displayed next to the time slots
         // Assumes starthr and endhr are in 24-hour time, and that startmin and endmin are
         // multiples of 15. 
@@ -123,13 +129,13 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
                 'days': iota(7),
                 'times': iota(timeArr.length),
                 'timeArr': timeArr,
-                'dayNames': [day0, day1, day2, day3, day4, day5, day6]
+                'dayNames': dayNames
             };
-            sakai.api.Util.TemplateRenderer($templateContainer, calendarData, $calendarContainer);
+            sakai.api.Util.TemplateRenderer(elements.$templateContainer, calendarData, elements.$calendarContainer);
             
             // All blocks are initially set to busytime. So we can filter by the busytime class.
             // Creates an array of div elements in divArr
-            $calendarContainer.children('.dayBlock').each(function(i, day) {
+            elements.$calendarContainer.children('.dayBlock').each(function(i, day) {
                 $(day).children('.timeBlock').each(function(i, time) {
                     var $time = $(time);
                     divArr.push($time);
@@ -157,11 +163,11 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
                 'times': iota(timeArr.length),
                 'numTimesPerDay': timeArr.length,
                 'timeArr': timeArr,
-                'dayNames': [day0, day1, day2, day3, day4, day5, day6]
+                'dayNames': dayNames
             };
-            sakai.api.Util.TemplateRenderer($aggregateTemplate, data, $aggregateContainer);
+            sakai.api.Util.TemplateRenderer(elements.$aggregateTemplate, data, elements.$aggregateContainer);
             var index = 0;
-            $aggregateContainer.children('.dayBlock').each(function(i, day) {
+            elements.$aggregateContainer.children('.dayBlock').each(function(i, day) {
                 $(day).children('.timeBlock').each(function(j, time) {
                     var ratio = aggrData.times[index].length / aggrData.total;
                     time.style.backgroundColor = rgba(0, 255, 0, ratio);
@@ -169,7 +175,7 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
                 });
             });
             
-            $aggregateContainer.mouseover(function(e) {
+            elements.$aggregateContainer.mouseover(function(e) {
                 var prefix = 'aggregate_';
                 var $e = $(e.target);
                 var id = $e.attr('id');
@@ -180,10 +186,10 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
                     'num': aggrData.times[idnum].length,
                     'users': aggrData.times[idnum]
                 };
-                sakai.api.Util.TemplateRenderer($peopleListTemplate, data, $peopleListContainer);
+                sakai.api.Util.TemplateRenderer(elements.$peopleListTemplate, data, elements.$peopleListContainer);
             });
             
-            $aggregateContainer.show();
+            elements.$aggregateContainer.show();
         };
 	
 	
@@ -192,16 +198,16 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
         * message to the user.
         */
         var renderUndefinedUserTemplate = function () {
-            sakai.api.Util.TemplateRenderer($undefinedUserTemplate, {}, $undefinedUserContainer);
+            sakai.api.Util.TemplateRenderer(elements.$undefinedUserTemplate, {}, elements.$undefinedUserContainer);
         };
 	
         ////////////////////
         // Event Handlers //
         ////////////////////
         
-        $changeViewButton.click(function() {
-            $aggregateRoot.toggleClass('groupmeetingscheduler_noshow');
-            $calendarContainer.toggleClass('groupmeetingscheduler_noshow');
+        elements.$changeViewButton.click(function() {
+            elements.$aggregateRoot.toggleClass('groupmeetingscheduler_noshow');
+            elements.$calendarContainer.toggleClass('groupmeetingscheduler_noshow');
         });
         
         // First argument is an array of booleans. Each index in the array represents one time block.
@@ -281,9 +287,9 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
         };
         
         var bindClick = function () {
-            $calendarContainer.mousedown(downhandler);
-            $calendarContainer.mouseup(uphandler);
-            $calendarContainer.mouseover(overhandler);
+            elements.$calendarContainer.mousedown(downhandler);
+            elements.$calendarContainer.mouseup(uphandler);
+            elements.$calendarContainer.mouseover(overhandler);
         };
         
         /**
@@ -321,12 +327,12 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
                 return;
             }
             
-            var ele = $(e.target);
-            if (!ele.hasClass('timeBlock')) return;
+            var $e = $(e.target);
+            if (!$e.hasClass('timeBlock')) return;
             
-            ele.removeClass('freetime busytime');
-            ele.addClass(mouseState === MouseState.TOFREE ? 'freetime' : 'busytime');
-            e.preventDefault();
+            $e.removeClass('freetime busytime');
+            $e.addClass(mouseState === MouseState.TOFREE ? 'freetime' : 'busytime');
+            $e.preventDefault();
         };
 	
         /////////////////////////////
@@ -352,7 +358,7 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
                 // If user is not logged in, userid is undefined
                 if (userid === undefined) {
                     renderUndefinedUserTemplate();
-                    $mainContainer.show();
+                    elements.$mainContainer.show();
                 }
                 loadData(function(success, data) {
                     if (!success) {
@@ -360,7 +366,7 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
                         return;
                     }
                     initGrid();
-                    $mainContainer.show();
+                    elements.$mainContainer.show();
                     bindClick();
                     pushGrid(data);
                 }); // end loadData
