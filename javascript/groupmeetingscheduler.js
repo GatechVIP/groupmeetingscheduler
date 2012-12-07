@@ -285,6 +285,39 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
                 
 	        });
         };
+
+        var loadAggregateData = function(callback){
+            
+            sakai.api.Widgets.loadWidgetData(tuid, function(success, data){
+
+                if(success){
+                    var aggregateData = { 
+                        total: 0,
+                        times: []
+                    };
+                    //Can't use repeat function here due to aliasing issues.
+                    for(var i = 0; i<timeArr.length * 7; i++){
+                        aggregateData.times.push([]);
+                    }
+                    
+                    
+                    for(var user in data.calendarData){
+                        if(user[0] === "_"){
+                            continue;
+                        }
+                        aggregateData.total++;
+                        console.log(aggregateData);
+                        for(var i = 0; i<data.calendarData[user].length; i++){
+                            if(data.calendarData[user][i]){
+                                aggregateData.times[i].push(user);
+                            }
+                        }
+                    }
+                    callback && callback(aggregateData);                    
+                }
+
+            });
+        };
         
         var bindClick = function () {
             elements.$calendarContainer.mousedown(downhandler);
@@ -372,16 +405,9 @@ require(['jquery', 'sakai/sakai.api.core'], function($, sakai) {
                 }); // end loadData
             }); // end loadMeData
             
-            // Test loadAggregateView
-            var times = [];
-            for (var i = 0; i < timeArr.length * 7; i++) {
-                times[i] = i%2 ? ['u1'] : ['u1', 'u2'];
-            }
-            var aggrData = {
-                'total': 2,
-                'times': times
-            };
-            loadAggregateView(aggrData);
+            loadAggregateData(function(aggrData){
+                loadAggregateView(aggrData);
+            });
         }; // end doInit
 
         // run the initialization function when the widget object loads
