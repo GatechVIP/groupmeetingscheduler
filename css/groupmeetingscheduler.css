@@ -19,7 +19,10 @@
 /* Widget Container CSS */
 .groupmeetingscheduler_widget {
 	padding: 0 12px;
-	font-size: 0;
+}
+
+.groupmeetingscheduler_noshow {
+    display: none;
 }
 
 /* Dashboard Widget Icon */
